@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function Login() {
   const [username, setUsername] = useState("admin");
-  const [password, setPassword] = useState("password");
+  const [password, setPassword] = useState("secret");
   
   const [regUsername, setRegUsername] = useState("");
   const [regDisplayName, setRegDisplayName] = useState("");
