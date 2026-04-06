@@ -1,5 +1,7 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useParams, Link, useLocation } from "wouter";
+import { useIsAdmin } from "@/hooks/use-is-admin";
+import { playMessageSound, playMentionSound, showBrowserNotification } from "@/utils/notification-sound";
 import { 
   useGetChannel, getGetChannelQueryKey,
   useGetChannelMessages, getGetChannelMessagesQueryKey,
@@ -75,6 +77,7 @@ export default function ChannelChat() {
     query: { queryKey: getListUsersQueryKey() }
   });
 
+  const isAdmin = useIsAdmin();
   const sendMessage = useSendMessage();
   const uploadFile = useUploadFile();
   const addReaction = useAddReaction();
@@ -106,6 +109,31 @@ export default function ChannelChat() {
       queryClient.invalidateQueries({ queryKey: ["channels-unread", user.id] });
     }).catch(() => {});
   }, [channelId, user?.id, messages?.length]);
+
+  // Notification sound for new messages from others
+  const prevMsgCountRef = useRef<number>(0);
+  useEffect(() => {
+    if (!messages || !user) return;
+    const prev = prevMsgCountRef.current;
+    const current = messages.length;
+    if (prev > 0 && current > prev) {
+      const newMsgs = messages.slice(prev);
+      const fromOthers = newMsgs.filter(m => m.senderId !== user.id);
+      if (fromOthers.length > 0) {
+        const hasMention = fromOthers.some(m =>
+          m.content && (m.content.includes(`@${user.username}`) || m.content.includes("@all") || m.content.includes("@here"))
+        );
+        if (hasMention) {
+          playMentionSound();
+          const sender = fromOthers[fromOthers.length - 1];
+          showBrowserNotification(`Mention in #${channel?.name ?? "channel"}`, sender.content ?? "");
+        } else {
+          playMessageSound();
+        }
+      }
+    }
+    prevMsgCountRef.current = current;
+  }, [messages?.length]);
 
   // @mention: build the suggestion list
   const MENTION_SPECIAL = [
@@ -409,9 +437,16 @@ export default function ChannelChat() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem className="text-destructive" onClick={handleDeleteChannel}>
-                <Trash2 className="h-4 w-4 mr-2" /> Delete Channel
-              </DropdownMenuItem>
+              {isAdmin && (
+                <DropdownMenuItem className="text-destructive" onClick={handleDeleteChannel}>
+                  <Trash2 className="h-4 w-4 mr-2" /> Delete Channel
+                </DropdownMenuItem>
+              )}
+              {!isAdmin && (
+                <DropdownMenuItem disabled>
+                  <Settings className="h-4 w-4 mr-2" /> Admin only
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

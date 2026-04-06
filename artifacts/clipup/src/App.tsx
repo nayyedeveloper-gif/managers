@@ -22,12 +22,13 @@ import ProjectDetail from "@/pages/project";
 import Tasks from "@/pages/tasks";
 import Goals from "@/pages/goals";
 import GoalDetail from "@/pages/goal";
+import AdminPanel from "@/pages/admin";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
 
-function ProtectedRoute({ component: Component, ...rest }: any) {
-  const { isAuthenticated, isLoading } = useAuth();
+function ProtectedRoute({ component: Component, adminOnly = false, ...rest }: any) {
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center bg-background text-foreground text-sm text-muted-foreground">Loading...</div>;
@@ -35,6 +36,20 @@ function ProtectedRoute({ component: Component, ...rest }: any) {
 
   if (!isAuthenticated) {
     return <Login />;
+  }
+
+  if (adminOnly && user?.role !== "admin") {
+    return (
+      <Route {...rest}>
+        <AppLayout>
+          <div className="flex flex-col items-center justify-center h-full gap-4 text-center p-8">
+            <div className="text-6xl">🔒</div>
+            <h2 className="text-xl font-semibold">Admin Access Required</h2>
+            <p className="text-muted-foreground max-w-sm">You don't have permission to view this page. Contact your administrator.</p>
+          </div>
+        </AppLayout>
+      </Route>
+    );
   }
 
   return (
@@ -68,6 +83,7 @@ function App() {
             <ProtectedRoute path="/channels/:id" component={ChannelChat} />
             <ProtectedRoute path="/notifications" component={Notifications} />
             <ProtectedRoute path="/settings" component={Settings} />
+            <ProtectedRoute path="/admin" component={AdminPanel} adminOnly={true} />
             <Route component={NotFound} />
           </Switch>
         </WouterRouter>

@@ -5,6 +5,7 @@ import {
 } from "@workspace/api-client-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
+import { useIsAdmin } from "@/hooks/use-is-admin";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +32,7 @@ type ChannelWithUnread = {
 
 export default function Channels() {
   const { user } = useAuth();
+  const isAdmin = useIsAdmin();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -99,6 +101,7 @@ export default function Channels() {
           <p className="text-muted-foreground mt-1">Browse and join conversation spaces.</p>
         </div>
 
+        {isAdmin && (
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -154,6 +157,7 @@ export default function Channels() {
             </form>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       <div className="bg-card border rounded-lg overflow-hidden shadow-sm">

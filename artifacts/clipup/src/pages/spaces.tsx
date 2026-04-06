@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link } from "wouter";
 import { useListSpaces, useCreateSpace, getListSpacesQueryKey } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
+import { useIsAdmin } from "@/hooks/use-is-admin";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function Spaces() {
   const { user } = useAuth();
+  const isAdmin = useIsAdmin();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
@@ -51,7 +53,7 @@ export default function Spaces() {
           <h1 className="text-2xl font-bold tracking-tight">Spaces</h1>
           <p className="text-muted-foreground text-sm mt-0.5">Organize your projects into workspaces</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        {isAdmin && (<Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button size="sm"><Plus className="mr-2 h-4 w-4" />New Space</Button>
           </DialogTrigger>
@@ -85,7 +87,7 @@ export default function Spaces() {
               <Button type="submit" className="w-full" disabled={createSpace.isPending}>Create Space</Button>
             </form>
           </DialogContent>
-        </Dialog>
+        </Dialog>)}
       </div>
 
       {isLoading ? (

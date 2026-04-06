@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "wouter";
 import { useListDepartments, getListDepartmentsQueryKey, useCreateDepartment } from "@workspace/api-client-react";
+import { useIsAdmin } from "@/hooks/use-is-admin";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Departments() {
+  const isAdmin = useIsAdmin();
   const { data: departments, isLoading } = useListDepartments({
     query: { queryKey: getListDepartmentsQueryKey() }
   });
@@ -44,7 +46,7 @@ export default function Departments() {
           <p className="text-muted-foreground mt-1">Manage organizational units and their channels.</p>
         </div>
         
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        {isAdmin && (<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
@@ -102,7 +104,7 @@ export default function Departments() {
               </DialogFooter>
             </form>
           </DialogContent>
-        </Dialog>
+        </Dialog>)}
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

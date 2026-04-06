@@ -1,19 +1,29 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useIsAdmin } from "@/hooks/use-is-admin";
 import { useListNotifications, getListNotificationsQueryKey, useHealthCheck, getHealthCheckQueryKey } from "@workspace/api-client-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Bell, Hash, LayoutDashboard, Settings, Users, LogOut, Menu, Activity, FolderKanban, Target, CheckSquare, Layers } from "lucide-react";
+import { Bell, Hash, LayoutDashboard, Settings, Users, LogOut, Menu, Activity, FolderKanban, Target, CheckSquare, Layers, Shield } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { requestNotificationPermission } from "@/utils/notification-sound";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
+  const isAdmin = useIsAdmin();
   const [location] = useLocation();
+
+  // Request browser notification permission on first load
+  useEffect(() => {
+    if (user) {
+      requestNotificationPermission().catch(() => {});
+    }
+  }, [user?.id]);
 
   const { data: notifications } = useListNotifications(
     { unreadOnly: true },
@@ -110,6 +120,19 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           </Link>
         </div>
       </div>
+      {isAdmin && (
+        <div className="px-3 py-2">
+          <p className="mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-amber-500/80">Admin</p>
+          <div className="space-y-0.5">
+            <Link href="/admin">
+              <Button variant={location.startsWith("/admin") ? "secondary" : "ghost"} size="sm" className="w-full justify-start h-8 px-3 text-amber-600 hover:text-amber-600 hover:bg-amber-500/10">
+                <Shield className="mr-2 h-4 w-4" />
+                Admin Panel
+              </Button>
+            </Link>
+          </div>
+        </div>
+      )}
       <div className="px-3 py-2">
         <p className="mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Account</p>
         <div className="space-y-0.5">

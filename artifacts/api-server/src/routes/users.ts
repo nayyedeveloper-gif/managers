@@ -121,6 +121,27 @@ router.get("/users/:id", async (req, res): Promise<void> => {
   res.json(user);
 });
 
+// Admin-only: update another user's role or status
+router.patch("/admin/users/:id", async (req, res): Promise<void> => {
+  const sessionUserId = (req.session as Record<string, unknown>).userId as number | undefined;
+  if (!sessionUserId) { res.status(401).json({ error: "Unauthorized" }); return; }
+  const [requester] = await db.select({ role: usersTable.role }).from(usersTable).where(eq(usersTable.id, sessionUserId));
+  if (!requester || requester.role !== "admin") { res.status(403).json({ error: "Admin access required" }); return; }
+
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid user ID" }); return; }
+  if (id === sessionUserId) { res.status(400).json({ error: "Cannot modify your own admin role" }); return; }
+
+  const updates: Record<string, string> = {};
+  if (req.body.role) updates.role = req.body.role;
+  if (req.body.status) updates.status = req.body.status;
+  if (Object.keys(updates).length === 0) { res.status(400).json({ error: "No updates" }); return; }
+
+  await db.update(usersTable).set(updates).where(eq(usersTable.id, id));
+  const user = await getUserWithDept(id);
+  res.json(user);
+});
+
 router.patch("/users/:id", async (req, res): Promise<void> => {
   const params = UpdateUserParams.safeParse(req.params);
   if (!params.success) {
