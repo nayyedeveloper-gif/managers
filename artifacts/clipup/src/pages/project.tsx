@@ -109,7 +109,7 @@ export default function ProjectDetail() {
       await createTask.mutateAsync({
         data: {
           title, description: description || null, priority: priority as "medium",
-          projectId, assigneeId: assigneeId ? parseInt(assigneeId) : null,
+          projectId, assigneeId: assigneeId && assigneeId !== "__unassigned__" ? parseInt(assigneeId) : null,
           creatorId: user.id, dueDate: dueDate || null, tags: []
         }
       });
@@ -208,7 +208,7 @@ export default function ProjectDetail() {
                   <Select value={assigneeId} onValueChange={setAssigneeId}>
                     <SelectTrigger><SelectValue placeholder="Unassigned" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Unassigned</SelectItem>
+                      <SelectItem value="__unassigned__">Unassigned</SelectItem>
                       {users.map(u => <SelectItem key={u.id} value={String(u.id)}>{u.displayName}</SelectItem>)}
                     </SelectContent>
                   </Select>

@@ -94,6 +94,7 @@ export default function ChannelChat() {
 
     try {
       await sendMessage.mutateAsync({
+        id: channelId,
         data: {
           content,
           senderId: user.id
@@ -154,6 +155,7 @@ export default function ChannelChat() {
       });
 
       await sendMessage.mutateAsync({
+        id: channelId,
         data: {
           content: `Uploaded ${file.name}`,
           fileUrl: uploadedFile.url,

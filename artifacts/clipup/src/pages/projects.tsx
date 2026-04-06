@@ -61,7 +61,7 @@ export default function Projects() {
         data: {
           name, description: description || null, status: status as "active",
           priority: priority as "medium", color,
-          spaceId: spaceId ? parseInt(spaceId) : null,
+          spaceId: spaceId && spaceId !== "__none__" ? parseInt(spaceId) : null,
           ownerId: user.id, dueDate: dueDate || null
         }
       });
@@ -128,7 +128,7 @@ export default function Projects() {
                   <Select value={spaceId} onValueChange={setSpaceId}>
                     <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="__none__">None</SelectItem>
                       {spaces.map(s => <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>)}
                     </SelectContent>
                   </Select>

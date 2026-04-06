@@ -101,7 +101,7 @@ export default function Tasks() {
       await createTask.mutateAsync({
         data: {
           title, description: description || null, priority: priority as "medium",
-          projectId: projectId ? parseInt(projectId) : null,
+          projectId: projectId && projectId !== "__none__" ? parseInt(projectId) : null,
           creatorId: user.id, assigneeId: user.id,
           dueDate: dueDate || null, tags: []
         }
@@ -177,7 +177,7 @@ export default function Tasks() {
                   <Select value={projectId} onValueChange={setProjectId}>
                     <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="__none__">None</SelectItem>
                       {projects.map(p => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
