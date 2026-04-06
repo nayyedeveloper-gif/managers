@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useListNotifications, getListNotificationsQueryKey, useHealthCheck, getHealthCheckQueryKey } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
-import { Bell, Hash, LayoutDashboard, Settings, Users, LogOut, Menu, Activity } from "lucide-react";
+import { Bell, Hash, LayoutDashboard, Settings, Users, LogOut, Menu, Activity, FolderKanban, Target, CheckSquare, Layers } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -15,6 +15,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
 
   const { data: notifications } = useListNotifications(
+    { unreadOnly: true },
     { query: { enabled: !!user, queryKey: getListNotificationsQueryKey({ unreadOnly: true }) } }
   );
 
@@ -27,20 +28,20 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const NavItems = () => (
     <>
       <div className="px-3 py-2">
-        <h2 className="mb-2 px-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Overview</h2>
-        <div className="space-y-1">
+        <p className="mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Overview</p>
+        <div className="space-y-0.5">
           <Link href="/">
-            <Button variant={location === "/" ? "secondary" : "ghost"} className="w-full justify-start">
+            <Button variant={location === "/" ? "secondary" : "ghost"} size="sm" className="w-full justify-start h-8 px-3">
               <LayoutDashboard className="mr-2 h-4 w-4" />
               Dashboard
             </Button>
           </Link>
           <Link href="/notifications">
-            <Button variant={location.startsWith("/notifications") ? "secondary" : "ghost"} className="w-full justify-start">
+            <Button variant={location.startsWith("/notifications") ? "secondary" : "ghost"} size="sm" className="w-full justify-start h-8 px-3">
               <Bell className="mr-2 h-4 w-4" />
               Notifications
               {unreadCount > 0 && (
-                <Badge variant="destructive" className="ml-auto flex h-5 w-5 shrink-0 items-center justify-center rounded-full p-0">
+                <Badge variant="destructive" className="ml-auto flex h-4 w-4 shrink-0 items-center justify-center rounded-full p-0 text-[10px]">
                   {unreadCount}
                 </Badge>
               )}
@@ -49,16 +50,45 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       </div>
       <div className="px-3 py-2">
-        <h2 className="mb-2 px-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Organization</h2>
-        <div className="space-y-1">
+        <p className="mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Work</p>
+        <div className="space-y-0.5">
+          <Link href="/spaces">
+            <Button variant={location.startsWith("/spaces") ? "secondary" : "ghost"} size="sm" className="w-full justify-start h-8 px-3">
+              <Layers className="mr-2 h-4 w-4" />
+              Spaces
+            </Button>
+          </Link>
+          <Link href="/projects">
+            <Button variant={location.startsWith("/projects") ? "secondary" : "ghost"} size="sm" className="w-full justify-start h-8 px-3">
+              <FolderKanban className="mr-2 h-4 w-4" />
+              Projects
+            </Button>
+          </Link>
+          <Link href="/tasks">
+            <Button variant={location.startsWith("/tasks") ? "secondary" : "ghost"} size="sm" className="w-full justify-start h-8 px-3">
+              <CheckSquare className="mr-2 h-4 w-4" />
+              My Tasks
+            </Button>
+          </Link>
+          <Link href="/goals">
+            <Button variant={location.startsWith("/goals") ? "secondary" : "ghost"} size="sm" className="w-full justify-start h-8 px-3">
+              <Target className="mr-2 h-4 w-4" />
+              Goals
+            </Button>
+          </Link>
+        </div>
+      </div>
+      <div className="px-3 py-2">
+        <p className="mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Communicate</p>
+        <div className="space-y-0.5">
           <Link href="/departments">
-            <Button variant={location.startsWith("/departments") ? "secondary" : "ghost"} className="w-full justify-start">
+            <Button variant={location.startsWith("/departments") ? "secondary" : "ghost"} size="sm" className="w-full justify-start h-8 px-3">
               <Users className="mr-2 h-4 w-4" />
               Departments
             </Button>
           </Link>
           <Link href="/channels">
-            <Button variant={location.startsWith("/channels") ? "secondary" : "ghost"} className="w-full justify-start">
+            <Button variant={location.startsWith("/channels") ? "secondary" : "ghost"} size="sm" className="w-full justify-start h-8 px-3">
               <Hash className="mr-2 h-4 w-4" />
               Channels
             </Button>
@@ -66,10 +96,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       </div>
       <div className="px-3 py-2">
-        <h2 className="mb-2 px-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Account</h2>
-        <div className="space-y-1">
+        <p className="mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Account</p>
+        <div className="space-y-0.5">
           <Link href="/settings">
-            <Button variant={location.startsWith("/settings") ? "secondary" : "ghost"} className="w-full justify-start">
+            <Button variant={location.startsWith("/settings") ? "secondary" : "ghost"} size="sm" className="w-full justify-start h-8 px-3">
               <Settings className="mr-2 h-4 w-4" />
               Settings
             </Button>
@@ -81,102 +111,92 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      {/* Desktop Sidebar */}
-      <aside className="hidden w-64 border-r bg-card md:flex flex-col">
-        <div className="flex h-14 items-center border-b px-6 shrink-0">
+      <aside className="hidden w-56 border-r bg-card md:flex flex-col">
+        <div className="flex h-12 items-center border-b px-4 shrink-0">
           <div className="flex items-center gap-2 font-bold text-primary">
             <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <Hash className="h-4 w-4" />
+              <Hash className="h-3.5 w-3.5" />
             </div>
             Clipup
           </div>
         </div>
-        <ScrollArea className="flex-1 py-4">
+        <ScrollArea className="flex-1 py-2">
           <NavItems />
         </ScrollArea>
-        <div className="p-4 border-t shrink-0 flex items-center justify-between text-xs text-muted-foreground">
+        <div className="p-3 border-t shrink-0 flex items-center justify-between text-xs text-muted-foreground">
           <span className="flex items-center">
-            <Activity className="w-3 h-3 mr-1" /> System Status
+            <Activity className="w-3 h-3 mr-1" />
+            API
           </span>
-          <span className="flex items-center gap-1.5">
-            <span className={`w-2 h-2 rounded-full ${health?.status === 'ok' ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
+          <span className="flex items-center gap-1">
+            <span className={`w-1.5 h-1.5 rounded-full ${health?.status === 'ok' ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
             {health?.status || 'checking'}
           </span>
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className="flex flex-1 flex-col overflow-hidden">
-        <header className="flex h-14 items-center justify-between border-b bg-card px-4 lg:px-6">
+        <header className="flex h-12 items-center justify-between border-b bg-card px-4">
           <div className="flex items-center md:hidden">
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="-ml-2 mr-2">
-                  <Menu className="h-5 w-5" />
-                  <span className="sr-only">Toggle navigation</span>
+                <Button variant="ghost" size="icon" className="-ml-2 mr-2 h-8 w-8">
+                  <Menu className="h-4 w-4" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-64 p-0 flex flex-col">
-                <div className="flex h-14 items-center border-b px-6 shrink-0">
+              <SheetContent side="left" className="w-56 p-0 flex flex-col">
+                <div className="flex h-12 items-center border-b px-4 shrink-0">
                   <div className="flex items-center gap-2 font-bold text-primary">
                     <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                      <Hash className="h-4 w-4" />
+                      <Hash className="h-3.5 w-3.5" />
                     </div>
                     Clipup
                   </div>
                 </div>
-                <ScrollArea className="flex-1 py-4">
+                <ScrollArea className="flex-1 py-2">
                   <NavItems />
                 </ScrollArea>
-                <div className="p-4 border-t shrink-0 flex items-center justify-between text-xs text-muted-foreground">
-                  <span className="flex items-center">
-                    <Activity className="w-3 h-3 mr-1" /> System Status
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span className={`w-2 h-2 rounded-full ${health?.status === 'ok' ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
-                    {health?.status || 'checking'}
-                  </span>
-                </div>
               </SheetContent>
             </Sheet>
-            <div className="font-semibold md:hidden">Clipup</div>
+            <span className="font-semibold text-sm">Clipup</span>
           </div>
-          
-          <div className="ml-auto flex items-center space-x-4">
+
+          <div className="ml-auto flex items-center gap-2">
             {user && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                    <Avatar className="h-8 w-8">
+                  <Button variant="ghost" className="h-8 w-8 rounded-full p-0">
+                    <Avatar className="h-7 w-7">
                       <AvatarImage src={user.avatarUrl || undefined} alt={user.displayName} />
-                      <AvatarFallback>{user.displayName.substring(0, 2).toUpperCase()}</AvatarFallback>
+                      <AvatarFallback className="text-xs">{user.displayName.substring(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end" forceMount>
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{user.displayName}</p>
-                      <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                      <p className="text-sm font-medium">{user.displayName}</p>
+                      <p className="text-xs text-muted-foreground">{user.email}</p>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <Link href="/settings">
                     <DropdownMenuItem className="cursor-pointer">
+                      <Settings className="mr-2 h-4 w-4" />
                       Settings
                     </DropdownMenuItem>
                   </Link>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive" onSelect={() => logout()}>
                     <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
+                    Log out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
           </div>
         </header>
-        <div className="flex-1 overflow-auto bg-muted/20">
+        <div className="flex-1 overflow-auto">
           {children}
         </div>
       </main>

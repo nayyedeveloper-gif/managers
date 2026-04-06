@@ -1,14 +1,10 @@
-import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useLoginUser, useLogoutUser, useGetUser, getGetUserQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAuthContext } from "@/contexts/auth-context";
 
 export function useAuth() {
-  const [userId, setUserId] = useState<number | null>(() => {
-    const stored = localStorage.getItem("currentUserId");
-    return stored ? parseInt(stored, 10) : null;
-  });
-  
+  const { userId, setUserId } = useAuthContext();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
 
@@ -26,8 +22,8 @@ export function useAuth() {
     try {
       const result = await loginMutation.mutateAsync(data);
       if (result && result.id) {
-        setUserId(result.id);
         localStorage.setItem("currentUserId", result.id.toString());
+        setUserId(result.id);
         setLocation("/");
       }
     } catch (error) {

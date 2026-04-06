@@ -4,3 +4,7 @@ export * from "./channels";
 export * from "./messages";
 export * from "./notifications";
 export * from "./files";
+export * from "./spaces";
+export * from "./projects";
+export * from "./tasks";
+export * from "./goals";
