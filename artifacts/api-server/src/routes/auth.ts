@@ -1,4 +1,4 @@
-import { Router, type IRouter } from "express";
+import { Router, type IRouter, type Request } from "express";
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { eq, or } from "drizzle-orm";
@@ -8,11 +8,17 @@ const router: IRouter = Router();
 
 const GOOGLE_CLIENT_ID = process.env["GOOGLE_CLIENT_ID"];
 const GOOGLE_CLIENT_SECRET = process.env["GOOGLE_CLIENT_SECRET"];
-const REPLIT_DOMAIN = process.env["REPLIT_DOMAINS"]?.split(",")[0] ?? "";
-const CALLBACK_URL = `https://${REPLIT_DOMAIN}/api/auth/google/callback`;
 
 function googleEnabled() {
   return !!(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET);
+}
+
+// Build the callback URL from the incoming request's host so it works on
+// any domain: dev Replit domain, .replit.app, or managers.29jewellery.com
+function buildCallbackUrl(req: Request) {
+  const proto = req.headers["x-forwarded-proto"] ?? req.protocol ?? "https";
+  const host = req.headers["x-forwarded-host"] ?? req.headers["host"] ?? "";
+  return `${proto}://${host}/api/auth/google/callback`;
 }
 
 if (googleEnabled()) {
@@ -21,7 +27,9 @@ if (googleEnabled()) {
       {
         clientID: GOOGLE_CLIENT_ID!,
         clientSecret: GOOGLE_CLIENT_SECRET!,
-        callbackURL: CALLBACK_URL,
+        // relative URL — passport will construct the full URL from the request
+        callbackURL: "/api/auth/google/callback",
+        proxy: true,
       },
       async (_accessToken, _refreshToken, profile, done) => {
         try {
@@ -45,7 +53,6 @@ if (googleEnabled()) {
           }
 
           if (user) {
-            // Link Google ID and verify email if not already done
             await db
               .update(usersTable)
               .set({
@@ -58,7 +65,6 @@ if (googleEnabled()) {
             return done(null, { id: user.id });
           }
 
-          // Create new user from Google profile
           if (!email) {
             return done(new Error("No email from Google profile"), false as any);
           }
@@ -78,7 +84,6 @@ if (googleEnabled()) {
           }
 
           const displayName = profile.displayName || username;
-
           const [newUser] = await db
             .insert(usersTable)
             .values({
@@ -103,41 +108,45 @@ if (googleEnabled()) {
   );
 }
 
-// GET /api/auth/google/status — check if Google auth is enabled
+// GET /api/auth/google/status
 router.get("/auth/google/status", (_req, res) => {
   res.json({ enabled: googleEnabled() });
 });
 
-// GET /api/auth/google — start OAuth flow
+// GET /api/auth/google — start OAuth, passing the dynamic callback URL
 router.get("/auth/google", (req, res, next) => {
   if (!googleEnabled()) {
     res.status(503).json({ error: "Google login is not configured." });
     return;
   }
-  passport.authenticate("google", { scope: ["profile", "email"], session: false })(req, res, next);
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+    session: false,
+    callbackURL: buildCallbackUrl(req),
+  } as any)(req, res, next);
 });
 
-// GET /api/auth/google/callback — handle OAuth callback
-router.get(
-  "/auth/google/callback",
-  (req, res, next) => {
-    if (!googleEnabled()) {
-      res.redirect(`/?error=google_not_configured`);
-      return;
-    }
-    passport.authenticate("google", { session: false }, async (err: Error | null, user: { id: number } | false) => {
+// GET /api/auth/google/callback
+router.get("/auth/google/callback", (req, res, next) => {
+  if (!googleEnabled()) {
+    res.redirect(`/?error=google_not_configured`);
+    return;
+  }
+  passport.authenticate(
+    "google",
+    { session: false, callbackURL: buildCallbackUrl(req) } as any,
+    async (err: Error | null, user: { id: number } | false) => {
       if (err || !user) {
         const msg = err?.message ?? "google_auth_failed";
         res.redirect(`/?error=${encodeURIComponent(msg)}`);
         return;
       }
-      // Store in session
       (req.session as Record<string, unknown>).userId = user.id;
       req.session.save(() => {
         res.redirect(`/?googleUserId=${user.id}`);
       });
-    })(req, res, next);
-  }
-);
+    }
+  )(req, res, next);
+});
 
 export default router;

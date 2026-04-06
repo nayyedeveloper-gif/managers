@@ -27,6 +27,8 @@ app.use(
     },
   }),
 );
+// Trust Replit's reverse proxy so req.protocol and req.hostname are correct
+app.set("trust proxy", true);
 app.use(cors({ credentials: true, origin: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
