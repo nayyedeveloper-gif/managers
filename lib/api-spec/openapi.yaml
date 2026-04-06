@@ -1,22 +1,34 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Clipup Office Messaging API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: users
+    description: User operations
+  - name: departments
+    description: Department operations
+  - name: channels
+    description: Channel operations
+  - name: messages
+    description: Message operations
+  - name: notifications
+    description: Notification operations
+  - name: files
+    description: File upload operations
+  - name: stats
+    description: Dashboard stats
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +36,603 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List all users
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+    post:
+      operationId: createUser
+      tags: [users]
+      summary: Create user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserBody"
+      responses:
+        "201":
+          description: Created user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{id}:
+    get:
+      operationId: getUser
+      tags: [users]
+      summary: Get user by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateUser
+      tags: [users]
+      summary: Update user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserBody"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/me:
+    get:
+      operationId: getMe
+      tags: [users]
+      summary: Get current user (session)
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+
+  /users/login:
+    post:
+      operationId: loginUser
+      tags: [users]
+      summary: Login with username/password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginBody"
+      responses:
+        "200":
+          description: Logged in user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Invalid credentials
+
+  /users/logout:
+    post:
+      operationId: logoutUser
+      tags: [users]
+      summary: Logout current user
+      responses:
+        "200":
+          description: Logged out
+
+  /departments:
+    get:
+      operationId: listDepartments
+      tags: [departments]
+      summary: List all departments
+      responses:
+        "200":
+          description: List of departments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Department"
+    post:
+      operationId: createDepartment
+      tags: [departments]
+      summary: Create department
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDepartmentBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Department"
+
+  /departments/{id}:
+    get:
+      operationId: getDepartment
+      tags: [departments]
+      summary: Get department
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Department
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Department"
+    patch:
+      operationId: updateDepartment
+      tags: [departments]
+      summary: Update department
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDepartmentBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Department"
+    delete:
+      operationId: deleteDepartment
+      tags: [departments]
+      summary: Delete department
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /departments/{id}/members:
+    get:
+      operationId: getDepartmentMembers
+      tags: [departments]
+      summary: Get members of a department
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+
+  /channels:
+    get:
+      operationId: listChannels
+      tags: [channels]
+      summary: List channels
+      parameters:
+        - name: departmentId
+          in: query
+          schema:
+            type: integer
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [public, private, direct]
+      responses:
+        "200":
+          description: Channels
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Channel"
+    post:
+      operationId: createChannel
+      tags: [channels]
+      summary: Create channel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateChannelBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Channel"
+
+  /channels/{id}:
+    get:
+      operationId: getChannel
+      tags: [channels]
+      summary: Get channel
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Channel
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Channel"
+    patch:
+      operationId: updateChannel
+      tags: [channels]
+      summary: Update channel
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateChannelBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Channel"
+    delete:
+      operationId: deleteChannel
+      tags: [channels]
+      summary: Delete channel
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /channels/{id}/members:
+    get:
+      operationId: getChannelMembers
+      tags: [channels]
+      summary: Get channel members
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+    post:
+      operationId: addChannelMember
+      tags: [channels]
+      summary: Add member to channel
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddMemberBody"
+      responses:
+        "200":
+          description: Added
+
+  /channels/{id}/messages:
+    get:
+      operationId: getChannelMessages
+      tags: [messages]
+      summary: Get messages in channel
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: before
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Message"
+    post:
+      operationId: sendMessage
+      tags: [messages]
+      summary: Send message to channel
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMessageBody"
+      responses:
+        "201":
+          description: Sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+
+  /messages/{id}:
+    patch:
+      operationId: updateMessage
+      tags: [messages]
+      summary: Edit a message
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMessageBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+    delete:
+      operationId: deleteMessage
+      tags: [messages]
+      summary: Delete a message
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /messages/{id}/reactions:
+    post:
+      operationId: addReaction
+      tags: [messages]
+      summary: Add emoji reaction to message
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReactionBody"
+      responses:
+        "200":
+          description: Reaction added
+
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: Get notifications for current user
+      parameters:
+        - name: unreadOnly
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+
+  /notifications/{id}/read:
+    patch:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark notification as read
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Marked read
+
+  /notifications/read-all:
+    patch:
+      operationId: markAllNotificationsRead
+      tags: [notifications]
+      summary: Mark all notifications as read
+      responses:
+        "200":
+          description: All marked read
+
+  /files/upload:
+    post:
+      operationId: uploadFile
+      tags: [files]
+      summary: Upload a file
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                channelId:
+                  type: integer
+      responses:
+        "201":
+          description: Uploaded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadedFile"
+
+  /channels/{id}/files:
+    get:
+      operationId: getChannelFiles
+      tags: [files]
+      summary: Get files shared in channel
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Files
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UploadedFile"
+
+  /stats/dashboard:
+    get:
+      operationId: getDashboardStats
+      tags: [stats]
+      summary: Get dashboard summary stats
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /stats/activity:
+    get:
+      operationId: getRecentActivity
+      tags: [stats]
+      summary: Get recent activity feed
+      responses:
+        "200":
+          description: Activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityItem"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +643,405 @@ components:
       required:
         - status
 
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        displayName:
+          type: string
+        email:
+          type: string
+        avatarUrl:
+          type: ["string", "null"]
+        role:
+          type: string
+          enum: [admin, member]
+        status:
+          type: string
+          enum: [online, away, busy, offline]
+        departmentId:
+          type: ["integer", "null"]
+        departmentName:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - username
+        - displayName
+        - email
+        - role
+        - status
+        - createdAt
+
+    CreateUserBody:
+      type: object
+      properties:
+        username:
+          type: string
+        displayName:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        role:
+          type: string
+          enum: [admin, member]
+        departmentId:
+          type: ["integer", "null"]
+        avatarUrl:
+          type: ["string", "null"]
+      required:
+        - username
+        - displayName
+        - email
+        - password
+
+    UpdateUserBody:
+      type: object
+      properties:
+        displayName:
+          type: string
+        email:
+          type: string
+        avatarUrl:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [online, away, busy, offline]
+        departmentId:
+          type: ["integer", "null"]
+
+    LoginBody:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+      required:
+        - username
+        - password
+
+    Department:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        color:
+          type: string
+        memberCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - color
+        - memberCount
+        - createdAt
+
+    CreateDepartmentBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        color:
+          type: string
+      required:
+        - name
+        - color
+
+    Channel:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        type:
+          type: string
+          enum: [public, private, direct]
+        departmentId:
+          type: ["integer", "null"]
+        departmentName:
+          type: ["string", "null"]
+        memberCount:
+          type: integer
+        lastMessageAt:
+          type: ["string", "null"]
+          format: date-time
+        unreadCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - type
+        - memberCount
+        - unreadCount
+        - createdAt
+
+    CreateChannelBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        type:
+          type: string
+          enum: [public, private, direct]
+        departmentId:
+          type: ["integer", "null"]
+        memberIds:
+          type: array
+          items:
+            type: integer
+      required:
+        - name
+        - type
+
+    AddMemberBody:
+      type: object
+      properties:
+        userId:
+          type: integer
+      required:
+        - userId
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: integer
+        content:
+          type: string
+        channelId:
+          type: integer
+        senderId:
+          type: integer
+        senderName:
+          type: string
+        senderAvatar:
+          type: ["string", "null"]
+        fileUrl:
+          type: ["string", "null"]
+        fileName:
+          type: ["string", "null"]
+        fileType:
+          type: ["string", "null"]
+        isEdited:
+          type: boolean
+        reactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Reaction"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - content
+        - channelId
+        - senderId
+        - senderName
+        - isEdited
+        - reactions
+        - createdAt
+        - updatedAt
+
+    SendMessageBody:
+      type: object
+      properties:
+        content:
+          type: string
+        fileUrl:
+          type: ["string", "null"]
+        fileName:
+          type: ["string", "null"]
+        fileType:
+          type: ["string", "null"]
+        senderId:
+          type: integer
+      required:
+        - content
+        - senderId
+
+    UpdateMessageBody:
+      type: object
+      properties:
+        content:
+          type: string
+      required:
+        - content
+
+    Reaction:
+      type: object
+      properties:
+        emoji:
+          type: string
+        count:
+          type: integer
+        userIds:
+          type: array
+          items:
+            type: integer
+      required:
+        - emoji
+        - count
+        - userIds
+
+    ReactionBody:
+      type: object
+      properties:
+        emoji:
+          type: string
+        userId:
+          type: integer
+      required:
+        - emoji
+        - userId
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        type:
+          type: string
+          enum: [message, mention, system]
+        title:
+          type: string
+        body:
+          type: string
+        isRead:
+          type: boolean
+        channelId:
+          type: ["integer", "null"]
+        messageId:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - type
+        - title
+        - body
+        - isRead
+        - createdAt
+
+    UploadedFile:
+      type: object
+      properties:
+        id:
+          type: integer
+        filename:
+          type: string
+        originalName:
+          type: string
+        mimeType:
+          type: string
+        size:
+          type: integer
+        url:
+          type: string
+        channelId:
+          type: ["integer", "null"]
+        uploadedBy:
+          type: integer
+        uploaderName:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - filename
+        - originalName
+        - mimeType
+        - size
+        - url
+        - uploadedBy
+        - uploaderName
+        - createdAt
+
+    DashboardStats:
+      type: object
+      properties:
+        totalUsers:
+          type: integer
+        onlineUsers:
+          type: integer
+        totalDepartments:
+          type: integer
+        totalChannels:
+          type: integer
+        totalMessages:
+          type: integer
+        messagesToday:
+          type: integer
+        filesShared:
+          type: integer
+        unreadNotifications:
+          type: integer
+      required:
+        - totalUsers
+        - onlineUsers
+        - totalDepartments
+        - totalChannels
+        - totalMessages
+        - messagesToday
+        - filesShared
+        - unreadNotifications
+
+    ActivityItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: [message, file_upload, user_joined, channel_created]
+        description:
+          type: string
+        actorName:
+          type: string
+        actorAvatar:
+          type: ["string", "null"]
+        channelId:
+          type: ["integer", "null"]
+        channelName:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - type
+        - description
+        - actorName
+        - createdAt
