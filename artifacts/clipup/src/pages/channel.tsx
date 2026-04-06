@@ -44,6 +44,13 @@ export default function ChannelChat() {
   const [isUploading, setIsUploading] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
   const [editContent, setEditContent] = useState("");
+
+  // @mention autocomplete state
+  const [mentionFilter, setMentionFilter] = useState("");
+  const [mentionStart, setMentionStart] = useState<number | null>(null);
+  const [showMentionDropdown, setShowMentionDropdown] = useState(false);
+  const [mentionHighlight, setMentionHighlight] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -87,6 +94,101 @@ export default function ChannelChat() {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, editingMessageId]);
+
+  // Mark channel as read when messages load / update
+  useEffect(() => {
+    if (!channelId || !user || !messages) return;
+    fetch(`/api/channels/${channelId}/read`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: user.id }),
+    }).then(() => {
+      queryClient.invalidateQueries({ queryKey: ["channels-unread", user.id] });
+    }).catch(() => {});
+  }, [channelId, user?.id, messages?.length]);
+
+  // @mention: build the suggestion list
+  const MENTION_SPECIAL = [
+    { username: "all", displayName: "@all — notify everyone" },
+    { username: "here", displayName: "@here — notify channel" },
+  ];
+  const mentionSuggestions = [
+    ...MENTION_SPECIAL,
+    ...(allUsers ?? []).map(u => ({ username: u.username, displayName: u.displayName })),
+  ].filter(u =>
+    mentionFilter === "" ||
+    u.username.toLowerCase().includes(mentionFilter.toLowerCase()) ||
+    u.displayName.toLowerCase().includes(mentionFilter.toLowerCase())
+  );
+
+  const handleContentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    const cursor = e.target.selectionStart ?? val.length;
+    setContent(val);
+
+    // Detect @ trigger: look backwards from cursor for an unbroken @word
+    const before = val.slice(0, cursor);
+    const match = before.match(/@([A-Za-z0-9_]*)$/);
+    if (match) {
+      setMentionStart(cursor - match[0].length);
+      setMentionFilter(match[1]);
+      setShowMentionDropdown(true);
+      setMentionHighlight(0);
+    } else {
+      setShowMentionDropdown(false);
+      setMentionStart(null);
+    }
+  };
+
+  const insertMention = (username: string) => {
+    if (mentionStart === null) return;
+    const before = content.slice(0, mentionStart);
+    const after = content.slice(inputRef.current?.selectionStart ?? content.length);
+    const newContent = `${before}@${username} ${after}`;
+    setContent(newContent);
+    setShowMentionDropdown(false);
+    setMentionStart(null);
+    setTimeout(() => inputRef.current?.focus(), 0);
+  };
+
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showMentionDropdown) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setMentionHighlight(h => Math.min(h + 1, mentionSuggestions.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setMentionHighlight(h => Math.max(h - 1, 0));
+    } else if (e.key === "Enter" || e.key === "Tab") {
+      if (mentionSuggestions.length > 0) {
+        e.preventDefault();
+        insertMention(mentionSuggestions[mentionHighlight].username);
+      }
+    } else if (e.key === "Escape") {
+      setShowMentionDropdown(false);
+    }
+  };
+
+  /** Render message content with highlighted @mentions */
+  const renderContent = (text: string) => {
+    const parts = text.split(/(@(?:all|here|[A-Za-z0-9_]+))/g);
+    return parts.map((part, i) => {
+      if (/^@/.test(part)) {
+        const uname = part.slice(1).toLowerCase();
+        const isMe = allUsers?.find(u => u.username.toLowerCase() === uname)?.id === user?.id;
+        const isAll = uname === "all" || uname === "here";
+        return (
+          <span
+            key={i}
+            className={`rounded px-0.5 font-semibold ${isMe || isAll ? "bg-primary/20 text-primary" : "bg-muted text-foreground"}`}
+          >
+            {part}
+          </span>
+        );
+      }
+      return <span key={i}>{part}</span>;
+    });
+  };
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -382,7 +484,7 @@ export default function ChannelChat() {
                       <>
                         {msg.content && msg.content !== `Uploaded ${msg.fileName}` && (
                           <div className="text-sm text-foreground bg-muted/30 w-fit py-1.5 px-3 rounded-lg border border-transparent group-hover:border-border transition-colors flex items-center gap-2">
-                            {msg.content}
+                            <span>{renderContent(msg.content)}</span>
                             {msg.isEdited && <span className="text-[10px] text-muted-foreground">(edited)</span>}
                           </div>
                         )}
@@ -489,6 +591,27 @@ export default function ChannelChat() {
       {/* Input Area */}
       <div className="p-4 bg-background border-t shrink-0">
         <div className="max-w-4xl mx-auto">
+          {/* @mention dropdown */}
+          {showMentionDropdown && mentionSuggestions.length > 0 && (
+            <div className="mb-2 bg-card border rounded-md shadow-lg overflow-hidden max-h-52 overflow-y-auto">
+              <div className="px-3 py-1.5 text-[11px] font-semibold text-muted-foreground border-b uppercase tracking-wider">
+                Mention a person
+              </div>
+              {mentionSuggestions.map((s, i) => (
+                <button
+                  key={s.username}
+                  type="button"
+                  onMouseDown={(e) => { e.preventDefault(); insertMention(s.username); }}
+                  className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 transition-colors ${
+                    i === mentionHighlight ? "bg-primary/10 text-primary" : "hover:bg-muted"
+                  }`}
+                >
+                  <span className="font-mono font-semibold text-xs w-16 shrink-0 text-muted-foreground">@{s.username}</span>
+                  <span className="text-foreground">{s.displayName}</span>
+                </button>
+              ))}
+            </div>
+          )}
           <form onSubmit={handleSend} className="flex gap-2">
             <input 
               type="file" 
@@ -507,10 +630,13 @@ export default function ChannelChat() {
               {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
             </Button>
             <Input 
-              placeholder={`Message #${channel?.name || "channel"}`}
+              ref={inputRef}
+              placeholder={`Message #${channel?.name || "channel"} — type @ to mention`}
               value={content}
-              onChange={(e) => setContent(e.target.value)}
+              onChange={handleContentChange}
+              onKeyDown={handleInputKeyDown}
               className="flex-1 bg-muted/50 focus-visible:bg-background"
+              autoComplete="off"
             />
             <Button type="submit" disabled={!content.trim() && !isUploading} className="shrink-0 px-8">
               <Send className="h-4 w-4 mr-2" />

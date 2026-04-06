@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { eq, sql, and } from "drizzle-orm";
-import { db, channelsTable, channelMembersTable, usersTable, departmentsTable } from "@workspace/db";
+import { eq, sql, and, gt } from "drizzle-orm";
+import { db, channelsTable, channelMembersTable, usersTable, departmentsTable, userChannelReadsTable, messagesTable } from "@workspace/db";
 import {
   CreateChannelBody,
   GetChannelParams,
@@ -26,7 +26,16 @@ async function getChannelFull(id: number, userId?: number) {
     updatedAt: channelsTable.updatedAt,
     memberCount: sql<number>`(SELECT COUNT(*) FROM channel_members WHERE channel_id = ${channelsTable.id})::int`,
     lastMessageAt: sql<string | null>`(SELECT created_at FROM messages WHERE channel_id = ${channelsTable.id} ORDER BY created_at DESC LIMIT 1)`,
-    unreadCount: sql<number>`0::int`,
+    unreadCount: userId
+      ? sql<number>`(
+          SELECT COUNT(*)::int FROM messages m
+          WHERE m.channel_id = ${channelsTable.id}
+          AND m.created_at > COALESCE(
+            (SELECT last_read_at FROM user_channel_reads WHERE channel_id = ${channelsTable.id} AND user_id = ${userId}),
+            '1970-01-01'::timestamptz
+          )
+        )`
+      : sql<number>`0::int`,
   })
     .from(channelsTable)
     .leftJoin(departmentsTable, eq(channelsTable.departmentId, departmentsTable.id))
@@ -36,6 +45,7 @@ async function getChannelFull(id: number, userId?: number) {
 
 router.get("/channels", async (req, res): Promise<void> => {
   const query = ListChannelsQueryParams.safeParse(req.query);
+  const userId = req.query.userId ? parseInt(req.query.userId as string, 10) : undefined;
   let conditions: ReturnType<typeof and>[] = [];
 
   if (query.success) {
@@ -58,7 +68,16 @@ router.get("/channels", async (req, res): Promise<void> => {
     updatedAt: channelsTable.updatedAt,
     memberCount: sql<number>`(SELECT COUNT(*) FROM channel_members WHERE channel_id = ${channelsTable.id})::int`,
     lastMessageAt: sql<string | null>`(SELECT created_at FROM messages WHERE channel_id = ${channelsTable.id} ORDER BY created_at DESC LIMIT 1)`,
-    unreadCount: sql<number>`0::int`,
+    unreadCount: userId
+      ? sql<number>`(
+          SELECT COUNT(*)::int FROM messages m
+          WHERE m.channel_id = ${channelsTable.id}
+          AND m.created_at > COALESCE(
+            (SELECT last_read_at FROM user_channel_reads WHERE channel_id = ${channelsTable.id} AND user_id = ${userId}),
+            '1970-01-01'::timestamptz
+          )
+        )`
+      : sql<number>`0::int`,
   })
     .from(channelsTable)
     .leftJoin(departmentsTable, eq(channelsTable.departmentId, departmentsTable.id));
@@ -91,12 +110,30 @@ router.get("/channels/:id", async (req, res): Promise<void> => {
     res.status(400).json({ error: params.error.message });
     return;
   }
-  const ch = await getChannelFull(params.data.id);
+  const userId = req.query.userId ? parseInt(req.query.userId as string, 10) : undefined;
+  const ch = await getChannelFull(params.data.id, userId);
   if (!ch) {
     res.status(404).json({ error: "Not found" });
     return;
   }
   res.json(ch);
+});
+
+// Mark channel as read for a user
+router.post("/channels/:id/read", async (req, res): Promise<void> => {
+  const id = parseInt(req.params.id, 10);
+  const userId = typeof req.body?.userId === "number" ? req.body.userId : parseInt(req.body?.userId, 10);
+  if (isNaN(id) || isNaN(userId)) {
+    res.status(400).json({ error: "Invalid params" });
+    return;
+  }
+  await db.insert(userChannelReadsTable)
+    .values({ channelId: id, userId, lastReadAt: new Date() })
+    .onConflictDoUpdate({
+      target: [userChannelReadsTable.channelId, userChannelReadsTable.userId],
+      set: { lastReadAt: new Date() },
+    });
+  res.json({ ok: true });
 });
 
 router.patch("/channels/:id", async (req, res): Promise<void> => {

@@ -2,6 +2,7 @@ import React from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useListNotifications, getListNotificationsQueryKey, useHealthCheck, getHealthCheckQueryKey } from "@workspace/api-client-react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Bell, Hash, LayoutDashboard, Settings, Users, LogOut, Menu, Activity, FolderKanban, Target, CheckSquare, Layers } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -23,7 +24,16 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     query: { queryKey: getHealthCheckQueryKey() }
   });
 
+  const { data: channelsData } = useQuery<{ id: number; unreadCount: number }[]>({
+    queryKey: ["channels-unread", user?.id],
+    queryFn: () => fetch(`/api/channels?userId=${user!.id}`).then(r => r.json()),
+    enabled: !!user,
+    refetchInterval: 15000,
+    staleTime: 10000,
+  });
+
   const unreadCount = notifications?.filter(n => !n.isRead).length || 0;
+  const unreadChannelCount = channelsData?.reduce((s, c) => s + (c.unreadCount ?? 0), 0) ?? 0;
 
   const NavItems = () => (
     <>
@@ -91,6 +101,11 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             <Button variant={location.startsWith("/channels") ? "secondary" : "ghost"} size="sm" className="w-full justify-start h-8 px-3">
               <Hash className="mr-2 h-4 w-4" />
               Channels
+              {unreadChannelCount > 0 && (
+                <Badge variant="destructive" className="ml-auto flex h-4 w-4 shrink-0 items-center justify-center rounded-full p-0 text-[10px]">
+                  {unreadChannelCount > 99 ? "99+" : unreadChannelCount}
+                </Badge>
+              )}
             </Button>
           </Link>
         </div>

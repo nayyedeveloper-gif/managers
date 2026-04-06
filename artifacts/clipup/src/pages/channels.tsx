@@ -1,31 +1,52 @@
 import React, { useState } from "react";
 import { Link } from "wouter";
 import { 
-  useListChannels, getListChannelsQueryKey,
   useCreateChannel, useListDepartments, getListDepartmentsQueryKey
 } from "@workspace/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/use-auth";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { Hash, Plus, Lock, MessageSquare } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 
+type ChannelWithUnread = {
+  id: number;
+  name: string;
+  description: string | null;
+  type: string;
+  departmentId: number | null;
+  departmentName: string | null;
+  memberCount: number;
+  lastMessageAt: string | null;
+  unreadCount: number;
+  createdAt: string;
+};
+
 export default function Channels() {
-  const { data: channels, isLoading } = useListChannels({
-    query: { queryKey: getListChannelsQueryKey() }
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const { data: channels, isLoading } = useQuery<ChannelWithUnread[]>({
+    queryKey: ["channels-unread", user?.id],
+    queryFn: () =>
+      fetch(`/api/channels${user ? `?userId=${user.id}` : ""}`).then((r) => r.json()),
+    enabled: !!user,
+    refetchInterval: 15000,
   });
+
   const { data: departments } = useListDepartments({
     query: { queryKey: getListDepartmentsQueryKey() }
   });
 
   const createChannel = useCreateChannel();
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({ 
@@ -46,7 +67,7 @@ export default function Channels() {
       };
       
       await createChannel.mutateAsync({ data: payload });
-      queryClient.invalidateQueries({ queryKey: getListChannelsQueryKey() });
+      queryClient.invalidateQueries({ queryKey: ["channels-unread", user?.id] });
       setIsDialogOpen(false);
       setFormData({ name: "", description: "", type: "public", departmentId: "0" });
       toast({ title: "Channel created" });
@@ -61,11 +82,20 @@ export default function Channels() {
     return <Hash className="h-5 w-5 text-emerald-500" />;
   };
 
+  const totalUnread = channels?.reduce((s, c) => s + (c.unreadCount ?? 0), 0) ?? 0;
+
   return (
     <div className="p-6 md:p-8 max-w-6xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Channels</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold tracking-tight">Channels</h1>
+            {totalUnread > 0 && (
+              <Badge variant="destructive" className="text-xs px-2 py-0.5">
+                {totalUnread} unread
+              </Badge>
+            )}
+          </div>
           <p className="text-muted-foreground mt-1">Browse and join conversation spaces.</p>
         </div>
 
@@ -134,13 +164,25 @@ export default function Channels() {
             {channels.map(channel => (
               <div key={channel.id} className="p-4 hover:bg-muted/50 transition-colors flex items-center justify-between group">
                 <div className="flex items-start gap-4">
-                  <div className="mt-1 p-2 bg-background border rounded-md shadow-sm">
+                  <div className="mt-1 p-2 bg-background border rounded-md shadow-sm relative">
                     {getChannelIcon(channel.type)}
+                    {channel.unreadCount > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground">
+                        {channel.unreadCount > 99 ? "99+" : channel.unreadCount}
+                      </span>
+                    )}
                   </div>
                   <div>
-                    <Link href={`/channels/${channel.id}`} className="font-semibold text-lg hover:underline decoration-primary">
-                      {channel.name}
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <Link href={`/channels/${channel.id}`} className={`font-semibold text-lg hover:underline decoration-primary ${channel.unreadCount > 0 ? "text-foreground" : "text-muted-foreground"}`}>
+                        {channel.name}
+                      </Link>
+                      {channel.unreadCount > 0 && (
+                        <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-4">
+                          {channel.unreadCount}
+                        </Badge>
+                      )}
+                    </div>
                     <p className="text-sm text-muted-foreground mt-1 line-clamp-1 max-w-2xl">
                       {channel.description || "No description"}
                     </p>
@@ -158,8 +200,8 @@ export default function Channels() {
                   </div>
                 </div>
                 <Link href={`/channels/${channel.id}`}>
-                  <Button variant="secondary" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                    Join
+                  <Button variant={channel.unreadCount > 0 ? "default" : "secondary"} size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                    {channel.unreadCount > 0 ? "View" : "Join"}
                   </Button>
                 </Link>
               </div>

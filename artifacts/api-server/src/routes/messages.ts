@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { eq, lt, desc } from "drizzle-orm";
-import { db, messagesTable, usersTable, notificationsTable } from "@workspace/db";
+import { eq, lt, desc, inArray } from "drizzle-orm";
+import { db, messagesTable, usersTable, notificationsTable, channelMembersTable } from "@workspace/db";
 import {
   GetChannelMessagesParams,
   GetChannelMessagesQueryParams,
@@ -15,6 +15,18 @@ import {
 
 const router: IRouter = Router();
 
+/** Parse @mentions from message content. Returns { mentionAll, usernames } */
+function parseMentions(content: string): { mentionAll: boolean; usernames: string[] } {
+  const mentionAll = /@all\b/i.test(content) || /@here\b/i.test(content);
+  const matches = content.matchAll(/@([A-Za-z0-9_]+)/g);
+  const usernames: string[] = [];
+  for (const m of matches) {
+    const name = m[1].toLowerCase();
+    if (name !== "all" && name !== "here") usernames.push(name);
+  }
+  return { mentionAll, usernames };
+}
+
 router.get("/channels/:id/messages", async (req, res): Promise<void> => {
   const params = GetChannelMessagesParams.safeParse(req.params);
   if (!params.success) {
@@ -23,9 +35,8 @@ router.get("/channels/:id/messages", async (req, res): Promise<void> => {
   }
   const qp = GetChannelMessagesQueryParams.safeParse(req.query);
   const limit = qp.success && qp.data.limit ? qp.data.limit : 50;
-  const before = qp.success && qp.data.before ? qp.data.before : undefined;
 
-  let q = db.select({
+  const q = db.select({
     id: messagesTable.id,
     content: messagesTable.content,
     channelId: messagesTable.channelId,
@@ -73,15 +84,44 @@ router.post("/channels/:id/messages", async (req, res): Promise<void> => {
 
   const [sender] = await db.select().from(usersTable).where(eq(usersTable.id, msg.senderId));
 
-  await db.insert(notificationsTable).values({
-    userId: parsed.data.senderId,
-    type: "message",
-    title: `New message in channel`,
-    body: parsed.data.content.slice(0, 100),
-    isRead: false,
-    channelId: params.data.id,
-    messageId: msg.id,
-  });
+  // --- Notifications for @mentions ---
+  const { mentionAll, usernames } = parseMentions(parsed.data.content);
+  const notifyUserIds = new Set<number>();
+
+  if (mentionAll) {
+    // Notify all channel members except the sender
+    const members = await db
+      .select({ userId: channelMembersTable.userId })
+      .from(channelMembersTable)
+      .where(eq(channelMembersTable.channelId, params.data.id));
+    for (const m of members) {
+      if (m.userId !== parsed.data.senderId) notifyUserIds.add(m.userId);
+    }
+  }
+
+  if (usernames.length > 0) {
+    const mentioned = await db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(inArray(usersTable.username, usernames));
+    for (const u of mentioned) {
+      if (u.id !== parsed.data.senderId) notifyUserIds.add(u.id);
+    }
+  }
+
+  if (notifyUserIds.size > 0) {
+    await db.insert(notificationsTable).values(
+      Array.from(notifyUserIds).map((uid) => ({
+        userId: uid,
+        type: "mention" as const,
+        title: `${sender?.displayName ?? "Someone"} mentioned you`,
+        body: parsed.data.content.slice(0, 100),
+        isRead: false,
+        channelId: params.data.id,
+        messageId: msg.id,
+      }))
+    );
+  }
 
   res.status(201).json({
     ...msg,
