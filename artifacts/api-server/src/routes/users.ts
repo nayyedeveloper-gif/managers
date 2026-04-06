@@ -23,6 +23,8 @@ async function getUserWithDept(id: number) {
     status: usersTable.status,
     departmentId: usersTable.departmentId,
     departmentName: departmentsTable.name,
+    emailVerified: usersTable.emailVerified,
+    googleId: usersTable.googleId,
     createdAt: usersTable.createdAt,
   })
     .from(usersTable)
@@ -71,6 +73,10 @@ router.post("/users/login", async (req, res): Promise<void> => {
   const [user] = await db.select().from(usersTable).where(eq(usersTable.username, parsed.data.username));
   if (!user) {
     res.status(401).json({ error: "Invalid credentials" });
+    return;
+  }
+  if (!user.passwordHash) {
+    res.status(401).json({ error: "This account uses Google login. Please sign in with Google." });
     return;
   }
   const valid = await bcrypt.compare(parsed.data.password, user.passwordHash);

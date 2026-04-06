@@ -9,7 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { Save, User as UserIcon } from "lucide-react";
+import { Save, User as UserIcon, ShieldCheck, AlertCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export default function Settings() {
   const { user } = useAuth();
@@ -99,7 +101,30 @@ export default function Settings() {
                 </div>
                 
                 <div className="grid gap-2">
-                  <Label htmlFor="email">Email Address</Label>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="email">Email Address</Label>
+                    {(user as any)?.emailVerified ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Badge variant="secondary" className="text-emerald-600 bg-emerald-500/10 border-emerald-500/20 cursor-default flex items-center gap-1 px-2 py-0.5 text-xs">
+                            <ShieldCheck className="h-3 w-3" />
+                            Verified
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>Your email is verified{(user as any)?.googleId ? " via Google" : ""}.</TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Badge variant="outline" className="text-amber-500 border-amber-500/30 cursor-default flex items-center gap-1 px-2 py-0.5 text-xs">
+                            <AlertCircle className="h-3 w-3" />
+                            Unverified
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>Sign in with Google to verify your email automatically.</TooltipContent>
+                      </Tooltip>
+                    )}
+                  </div>
                   <Input 
                     id="email" 
                     type="email" 
