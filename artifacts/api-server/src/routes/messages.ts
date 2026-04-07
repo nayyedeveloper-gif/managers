@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { eq, lt, desc, inArray } from "drizzle-orm";
 import { db, messagesTable, usersTable, notificationsTable, channelMembersTable } from "@workspace/db";
+import { sendPushToUser } from "./push";
 import {
   GetChannelMessagesParams,
   GetChannelMessagesQueryParams,
@@ -120,6 +121,18 @@ router.post("/channels/:id/messages", async (req, res): Promise<void> => {
         channelId: params.data.id,
         messageId: msg.id,
       }))
+    );
+
+    // Send push notifications to all mentioned users
+    await Promise.allSettled(
+      Array.from(notifyUserIds).map((uid) =>
+        sendPushToUser(uid, {
+          title: `${sender?.displayName ?? "Someone"} mentioned you`,
+          body: parsed.data.content.slice(0, 80),
+          url: `/channel/${params.data.id}`,
+          icon: "/icon-192.png",
+        })
+      )
     );
   }
 

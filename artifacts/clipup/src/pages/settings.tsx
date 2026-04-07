@@ -9,12 +9,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { Save, User as UserIcon, ShieldCheck, AlertCircle } from "lucide-react";
+import { Save, User as UserIcon, ShieldCheck, AlertCircle, Bell, BellOff } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { usePushNotifications } from "@/hooks/use-push-notifications";
 
 export default function Settings() {
   const { user } = useAuth();
+  const { status: pushStatus, isSubscribed, loading: pushLoading, subscribe, unsubscribe } = usePushNotifications(user?.id ?? null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const updateUser = useUpdateUser();
@@ -178,6 +180,53 @@ export default function Settings() {
               </CardFooter>
             </Card>
           </form>
+
+          {/* Push Notifications Card */}
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Bell className="mr-2 h-5 w-5" />
+                Push Notifications
+              </CardTitle>
+              <CardDescription>
+                Receive push notifications on this device when you are @mentioned or assigned a task.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {pushStatus === "unsupported" ? (
+                <p className="text-sm text-muted-foreground">Push notifications are not supported on this browser.</p>
+              ) : pushStatus === "denied" ? (
+                <div className="flex items-start gap-3 p-3 rounded-md bg-destructive/10 text-destructive text-sm">
+                  <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+                  <span>Notification permission was denied. Please enable it in your browser settings, then reload.</span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">
+                      {isSubscribed ? "Push notifications are enabled" : "Push notifications are disabled"}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {isSubscribed
+                        ? "You will receive notifications even when the app is closed."
+                        : "Enable to get notified about mentions and task updates."}
+                    </p>
+                  </div>
+                  {isSubscribed ? (
+                    <Button variant="outline" size="sm" onClick={unsubscribe} disabled={pushLoading}>
+                      <BellOff className="mr-2 h-4 w-4" />
+                      {pushLoading ? "Disabling..." : "Disable"}
+                    </Button>
+                  ) : (
+                    <Button size="sm" onClick={subscribe} disabled={pushLoading}>
+                      <Bell className="mr-2 h-4 w-4" />
+                      {pushLoading ? "Enabling..." : "Enable Notifications"}
+                    </Button>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
