@@ -155,7 +155,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
               <Hash className="h-3.5 w-3.5" />
             </div>
-            Clipup
+            29 Management
           </div>
         </div>
         <ScrollArea className="flex-1 py-2">
@@ -188,7 +188,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                     <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
                       <Hash className="h-3.5 w-3.5" />
                     </div>
-                    Clipup
+                    29 Management
                   </div>
                 </div>
                 <ScrollArea className="flex-1 py-2">
@@ -196,7 +196,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 </ScrollArea>
               </SheetContent>
             </Sheet>
-            <span className="font-semibold text-sm">Clipup</span>
+            <span className="font-semibold text-sm">29 Management</span>
           </div>
 
           <div className="ml-auto flex items-center gap-2">

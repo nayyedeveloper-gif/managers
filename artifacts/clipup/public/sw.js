@@ -60,10 +60,10 @@ self.addEventListener('push', (event) => {
   try {
     data = event.data.json();
   } catch {
-    data = { title: 'Clipup', body: event.data.text() };
+    data = { title: '29 Management', body: event.data.text() };
   }
 
-  const { title = 'Clipup', body = '', url = '/', icon = '/icon-192.png', badge = '/icon-192.png' } = data;
+  const { title = '29 Management', body = '', url = '/', icon = '/icon-192.png', badge = '/icon-192.png' } = data;
 
   event.waitUntil(
     self.registration.showNotification(title, {
