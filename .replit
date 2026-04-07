@@ -27,3 +27,10 @@ timeoutMs = 20000
 
 [nix]
 channel = "stable-25_05"
+
+[userenv]
+
+[userenv.shared]
+VAPID_PUBLIC_KEY = "BAkdqH3vKr6IRMJbS-b9RUoBJd-b5mGFaene63u6Rhk0jg7D4DYBBmz8rOtIuypTvV68xtsQPK_mw4UtLPLW-38"
+VAPID_PRIVATE_KEY = "2FSFoRz58XEYwXpa_zhwttNRbxMDn_7tGRl6IImJEkI"
+VAPID_SUBJECT = "mailto:admin@29jewellery.com"

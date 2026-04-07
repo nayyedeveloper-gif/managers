@@ -13,6 +13,7 @@ import projectsRouter from "./projects";
 import tasksRouter from "./tasks";
 import goalsRouter from "./goals";
 import seedRouter from "./seed";
+import pushRouter from "./push";
 
 const router: IRouter = Router();
 
@@ -30,5 +31,6 @@ router.use(projectsRouter);
 router.use(tasksRouter);
 router.use(goalsRouter);
 router.use(seedRouter);
+router.use(pushRouter);
 
 export default router;

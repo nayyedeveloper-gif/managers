@@ -8,3 +8,4 @@ export * from "./spaces";
 export * from "./projects";
 export * from "./tasks";
 export * from "./goals";
+export * from "./pushSubscriptions";
