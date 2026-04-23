@@ -43,6 +43,7 @@ router.post("/push/subscribe", async (req, res) => {
     console.error("Push subscribe error:", err);
     res.status(500).json({ error: "Failed to save subscription" });
   }
+  return;
 });
 
 // DELETE /api/push/subscribe
@@ -55,6 +56,7 @@ router.delete("/push/subscribe", async (req, res) => {
     .where(eq(pushSubscriptionsTable.endpoint, endpoint));
 
   res.json({ ok: true });
+  return;
 });
 
 export async function sendPushToUser(
