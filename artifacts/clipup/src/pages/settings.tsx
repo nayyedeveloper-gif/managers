@@ -25,7 +25,7 @@ export default function Settings() {
     displayName: "",
     email: "",
     avatarUrl: "",
-    status: "online" as const
+    status: "online" as "online" | "away" | "busy" | "offline"
   });
 
   useEffect(() => {
