@@ -33,7 +33,7 @@ export default function DepartmentDetail() {
   });
 
   const { data: channels, isLoading: isChannelsLoading } = useListChannels({
-    query: { queryKey: getListChannelsQueryKey({ departmentId }) }
+    departmentId: departmentId
   });
 
   const updateDept = useUpdateDepartment();

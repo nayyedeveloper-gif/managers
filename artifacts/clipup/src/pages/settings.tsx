@@ -34,7 +34,7 @@ export default function Settings() {
         displayName: user.displayName,
         email: user.email,
         avatarUrl: user.avatarUrl || "",
-        status: user.status
+        status: user.status as "online" | "away" | "busy" | "offline"
       });
     }
   }, [user]);

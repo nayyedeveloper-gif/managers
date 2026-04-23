@@ -12,9 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 
 export default function Notifications() {
-  const { data: notifications, isLoading } = useListNotifications({
-    query: { queryKey: getListNotificationsQueryKey() }
-  });
+  const { data: notifications, isLoading } = useListNotifications({});
 
   const markRead = useMarkNotificationRead();
   const markAllRead = useMarkAllNotificationsRead();
