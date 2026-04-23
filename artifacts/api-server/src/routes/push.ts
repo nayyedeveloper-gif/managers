@@ -67,7 +67,7 @@ export async function sendPushToUser(
     .where(eq(pushSubscriptionsTable.userId, userId));
 
   const results = await Promise.allSettled(
-    subs.map((sub) =>
+    subs.map((sub: { endpoint: string; p256dh: string; auth: string }) =>
       webpush.sendNotification(
         { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
         JSON.stringify(payload)

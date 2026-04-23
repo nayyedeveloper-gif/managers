@@ -28,7 +28,7 @@ router.post("/files/upload", upload.single("file"), async (req, res): Promise<vo
     res.status(400).json({ error: "No file uploaded" });
     return;
   }
-  const userId = ((req.session as Record<string, unknown>).userId as number) ?? 1;
+  const userId = ((req.session as unknown as Record<string, unknown>).userId as number) ?? 1;
   const channelId = req.body.channelId ? parseInt(req.body.channelId, 10) : null;
   const url = `/api/files/${req.file.filename}`;
 

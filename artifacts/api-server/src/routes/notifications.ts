@@ -10,7 +10,7 @@ const router: IRouter = Router();
 
 router.get("/notifications", async (req, res): Promise<void> => {
   const qp = ListNotificationsQueryParams.safeParse(req.query);
-  const userId = ((req.session as Record<string, unknown>).userId as number) ?? 1;
+  const userId = ((req.session as unknown as Record<string, unknown>).userId as number) ?? 1;
 
   let notifications;
   if (qp.success && qp.data.unreadOnly) {
@@ -38,7 +38,7 @@ router.patch("/notifications/:id/read", async (req, res): Promise<void> => {
 });
 
 router.patch("/notifications/read-all", async (req, res): Promise<void> => {
-  const userId = ((req.session as Record<string, unknown>).userId as number) ?? 1;
+  const userId = ((req.session as unknown as Record<string, unknown>).userId as number) ?? 1;
   await db.update(notificationsTable)
     .set({ isRead: true })
     .where(eq(notificationsTable.userId, userId));

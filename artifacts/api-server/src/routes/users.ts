@@ -85,13 +85,13 @@ router.post("/users/login", async (req, res): Promise<void> => {
     return;
   }
   await db.update(usersTable).set({ status: "online" }).where(eq(usersTable.id, user.id));
-  (req.session as Record<string, unknown>).userId = user.id;
+  (req.session as unknown as Record<string, unknown>).userId = user.id;
   const full = await getUserWithDept(user.id);
   res.json(full);
 });
 
 router.post("/users/logout", async (req, res): Promise<void> => {
-  const userId = (req.session as Record<string, unknown>).userId as number | undefined;
+  const userId = (req.session as unknown as Record<string, unknown>).userId as number | undefined;
   if (userId) {
     await db.update(usersTable).set({ status: "offline" }).where(eq(usersTable.id, userId));
   }
@@ -100,7 +100,7 @@ router.post("/users/logout", async (req, res): Promise<void> => {
 });
 
 router.get("/users/me", async (req, res): Promise<void> => {
-  const userId = (req.session as Record<string, unknown>).userId as number | undefined;
+  const userId = (req.session as unknown as Record<string, unknown>).userId as number | undefined;
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
     return;
@@ -129,7 +129,7 @@ router.get("/users/:id", async (req, res): Promise<void> => {
 
 // Admin-only: update another user's role or status
 router.patch("/admin/users/:id", async (req, res): Promise<void> => {
-  const sessionUserId = (req.session as Record<string, unknown>).userId as number | undefined;
+  const sessionUserId = (req.session as unknown as Record<string, unknown>).userId as number | undefined;
   if (!sessionUserId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const [requester] = await db.select({ role: usersTable.role }).from(usersTable).where(eq(usersTable.id, sessionUserId));
   if (!requester || requester.role !== "admin") { res.status(403).json({ error: "Admin access required" }); return; }

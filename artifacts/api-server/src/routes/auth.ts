@@ -8,6 +8,7 @@ const router: IRouter = Router();
 
 const GOOGLE_CLIENT_ID = process.env["GOOGLE_CLIENT_ID"];
 const GOOGLE_CLIENT_SECRET = process.env["GOOGLE_CLIENT_SECRET"];
+const GOOGLE_CALLBACK_URL = process.env["GOOGLE_CALLBACK_URL"];
 
 function googleEnabled() {
   return !!(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET);
@@ -27,8 +28,7 @@ if (googleEnabled()) {
       {
         clientID: GOOGLE_CLIENT_ID!,
         clientSecret: GOOGLE_CLIENT_SECRET!,
-        // relative URL — passport will construct the full URL from the request
-        callbackURL: "/api/auth/google/callback",
+        callbackURL: GOOGLE_CALLBACK_URL || "/api/auth/google/callback",
         proxy: true,
       },
       async (_accessToken, _refreshToken, profile, done) => {
@@ -141,7 +141,7 @@ router.get("/auth/google/callback", (req, res, next) => {
         res.redirect(`/?error=${encodeURIComponent(msg)}`);
         return;
       }
-      (req.session as Record<string, unknown>).userId = user.id;
+      (req.session as unknown as Record<string, unknown>).userId = user.id;
       req.session.save(() => {
         res.redirect(`/?googleUserId=${user.id}`);
       });
