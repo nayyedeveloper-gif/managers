@@ -9,7 +9,7 @@ const rawPort = process.env.MOCKUP_PORT || process.env.PORT;
 
 if (!rawPort) {
   throw new Error(
-    "PORT environment variable is required but was not provided.",
+    "PORT or MOCKUP_PORT environment variable is required but was not provided.",
   );
 }
 
