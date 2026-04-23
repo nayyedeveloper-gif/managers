@@ -400,7 +400,7 @@ export const MarkNotificationReadParams = zod.object({
 });
 
 export const UploadFileBody = zod.object({
-  file: zod.instanceof(File).optional(),
+  file: zod.any().optional(),
   channelId: zod.number().optional(),
 });
 
