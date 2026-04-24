@@ -5,7 +5,7 @@ import { useIsAdmin } from "@/hooks/use-is-admin";
 import { useListNotifications, getListNotificationsQueryKey, useHealthCheck, getHealthCheckQueryKey } from "@workspace/api-client-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Bell, Hash, LayoutDashboard, Settings, Users, LogOut, Menu, Activity, FolderKanban, Target, CheckSquare, Layers, Shield } from "lucide-react";
+import { Bell, Hash, LayoutDashboard, Settings, Users, LogOut, Menu, Activity, FolderKanban, Target, CheckSquare, Layers, Shield, MessageSquare, Calendar, Clock } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -44,8 +44,25 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     staleTime: 10000,
   });
 
+  const { data: dmsData } = useQuery<{ userId: number; unreadCount: number }[]>({
+    queryKey: ["dms-unread", user?.id],
+    queryFn: () => fetch("/api/dms/conversations").then(r => r.json()),
+    enabled: !!user,
+    refetchInterval: 15000,
+    staleTime: 10000,
+  });
+
+  const { data: tasksData } = useQuery<{ todo: number; done: number; overdue: number; dueToday: number }>({
+    queryKey: ["tasks-summary", user?.id],
+    queryFn: () => fetch(`/api/tasks/my-tasks?userId=${user!.id}`).then(r => r.json()),
+    enabled: !!user,
+    refetchInterval: 15000,
+    staleTime: 10000,
+  });
+
   const unreadCount = notifications?.filter(n => !n.isRead).length || 0;
   const unreadChannelCount = channelsData?.reduce((s, c) => s + (c.unreadCount ?? 0), 0) ?? 0;
+  const unreadDmCount = dmsData?.reduce((s, c) => s + (c.unreadCount ?? 0), 0) ?? 0;
 
   const NavItems = () => (
     <>
@@ -87,9 +104,20 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </Button>
           </Link>
           <Link href="/tasks">
-            <Button variant={location.startsWith("/tasks") ? "secondary" : "ghost"} size="sm" className="w-full justify-start h-8 px-3">
+            <Button variant={location.startsWith("/tasks") ? "secondary" : "ghost"} size="sm" className="w-full justify-start h-8 px-3 mb-1">
               <CheckSquare className="mr-2 h-4 w-4" />
-              My Tasks
+              Assigned to Me
+            </Button>
+          </Link>
+          <Link href="/tasks/today-overdue">
+            <Button variant={location.startsWith("/tasks/today-overdue") ? "secondary" : "ghost"} size="sm" className="w-full justify-start h-8 px-3 mb-1">
+              <Calendar className="mr-2 h-4 w-4" />
+              Today & Overdue
+              {tasksData?.dueToday && tasksData.dueToday > 0 && (
+                <Badge variant="destructive" className="ml-auto flex h-4 w-4 shrink-0 items-center justify-center rounded-full p-0 text-[10px]">
+                  {tasksData.dueToday}
+                </Badge>
+              )}
             </Button>
           </Link>
           <Link href="/goals">
@@ -116,6 +144,17 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               {unreadChannelCount > 0 && (
                 <Badge variant="destructive" className="ml-auto flex h-4 w-4 shrink-0 items-center justify-center rounded-full p-0 text-[10px]">
                   {unreadChannelCount > 99 ? "99+" : unreadChannelCount}
+                </Badge>
+              )}
+            </Button>
+          </Link>
+          <Link href="/dms">
+            <Button variant={location.startsWith("/dms") ? "secondary" : "ghost"} size="sm" className="w-full justify-start h-8 px-3">
+              <MessageSquare className="mr-2 h-4 w-4" />
+              Direct Messages
+              {unreadDmCount > 0 && (
+                <Badge variant="destructive" className="ml-auto flex h-4 w-4 shrink-0 items-center justify-center rounded-full p-0 text-[10px]">
+                  {unreadDmCount > 99 ? "99+" : unreadDmCount}
                 </Badge>
               )}
             </Button>

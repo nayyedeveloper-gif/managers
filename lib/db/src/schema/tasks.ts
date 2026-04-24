@@ -14,6 +14,7 @@ export const tasksTable = pgTable("tasks", {
   creatorId: integer("creator_id").notNull(),
   dueDate: timestamp("due_date", { withTimezone: true }),
   startDate: timestamp("start_date", { withTimezone: true }),
+  dateDone: timestamp("date_done", { withTimezone: true }),
   estimatedHours: real("estimated_hours"),
   actualHours: real("actual_hours"),
   tags: text("tags").array().notNull().default([]),

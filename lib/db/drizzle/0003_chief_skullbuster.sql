@@ -1,0 +1,1 @@
+ALTER TABLE "tasks" ADD COLUMN "date_done" timestamp with time zone;

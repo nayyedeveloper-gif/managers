@@ -8,6 +8,27 @@
       "when": 1776979896903,
       "tag": "0000_colorful_synch",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1777072358241,
+      "tag": "0001_chilly_demogoblin",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777072838528,
+      "tag": "0002_rapid_shockwave",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1777073370140,
+      "tag": "0003_chief_skullbuster",
+      "breakpoints": true
     }
   ]
 }

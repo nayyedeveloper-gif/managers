@@ -2,6 +2,7 @@ export * from "./users";
 export * from "./departments";
 export * from "./channels";
 export * from "./messages";
+export * from "./directMessages";
 export * from "./notifications";
 export * from "./files";
 export * from "./spaces";

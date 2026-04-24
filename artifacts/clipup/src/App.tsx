@@ -13,6 +13,7 @@ import Departments from "@/pages/departments";
 import DepartmentDetail from "@/pages/department";
 import Channels from "@/pages/channels";
 import ChannelChat from "@/pages/channel";
+import DMs from "@/pages/dms";
 import Notifications from "@/pages/notifications";
 import Settings from "@/pages/settings";
 import Spaces from "@/pages/spaces";
@@ -75,12 +76,15 @@ function App() {
             <ProtectedRoute path="/projects" component={Projects} />
             <ProtectedRoute path="/projects/:id" component={ProjectDetail} />
             <ProtectedRoute path="/tasks" component={Tasks} />
+            <ProtectedRoute path="/tasks/today-overdue" component={Tasks} />
+            <ProtectedRoute path="/tasks/:id" component={Tasks} />
             <ProtectedRoute path="/goals" component={Goals} />
             <ProtectedRoute path="/goals/:id" component={GoalDetail} />
             <ProtectedRoute path="/departments" component={Departments} />
             <ProtectedRoute path="/departments/:id" component={DepartmentDetail} />
             <ProtectedRoute path="/channels" component={Channels} />
             <ProtectedRoute path="/channels/:id" component={ChannelChat} />
+            <ProtectedRoute path="/dms" component={DMs} />
             <ProtectedRoute path="/notifications" component={Notifications} />
             <ProtectedRoute path="/settings" component={Settings} />
             <ProtectedRoute path="/admin" component={AdminPanel} adminOnly={true} />
