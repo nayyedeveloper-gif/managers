@@ -13,7 +13,7 @@ import projectsRouter from "./projects";
 import tasksRouter from "./tasks";
 import goalsRouter from "./goals";
 import seedRouter from "./seed";
-import pushRouter from "./push";
+// import pushRouter from "./push"; // Temporarily disabled due to VAPID configuration issue
 
 const router: IRouter = Router();
 
@@ -31,6 +31,6 @@ router.use(projectsRouter);
 router.use(tasksRouter);
 router.use(goalsRouter);
 router.use(seedRouter);
-router.use(pushRouter);
+// router.use(pushRouter); // Temporarily disabled due to VAPID configuration issue
 
 export default router;
