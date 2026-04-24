@@ -6,11 +6,14 @@ import { eq } from "drizzle-orm";
 
 const router = Router();
 
-webpush.setVapidDetails(
-  process.env["VAPID_SUBJECT"] ?? "mailto:admin@example.com",
-  process.env["VAPID_PUBLIC_KEY"] ?? "",
-  process.env["VAPID_PRIVATE_KEY"] ?? ""
-);
+// Only set VAPID details if keys are present
+const vapidPublicKey = process.env["VAPID_PUBLIC_KEY"];
+const vapidPrivateKey = process.env["VAPID_PRIVATE_KEY"];
+const vapidSubject = process.env["VAPID_SUBJECT"] ?? "mailto:admin@example.com";
+
+if (vapidPublicKey && vapidPrivateKey) {
+  webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
+}
 
 export { webpush };
 
