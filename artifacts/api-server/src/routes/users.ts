@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
+import { eq, or } from "drizzle-orm";
 import { db, usersTable, departmentsTable } from "@workspace/db";
 import bcrypt from "bcryptjs";
 import {
@@ -11,6 +11,13 @@ import {
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
+
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+  return fallback;
+}
 
 async function getUserWithDept(id: number) {
   const user = await db.select({
@@ -57,11 +64,34 @@ router.post("/users", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  const { password, ...rest } = parsed.data;
-  const passwordHash = await bcrypt.hash(password, 10);
-  const [user] = await db.insert(usersTable).values({ ...rest, passwordHash }).returning();
-  const full = await getUserWithDept(user.id);
-  res.status(201).json(full);
+
+  try {
+    const { password, ...rest } = parsed.data;
+
+    const [existingUser] = await db
+      .select({ id: usersTable.id, username: usersTable.username, email: usersTable.email })
+      .from(usersTable)
+      .where(or(eq(usersTable.username, rest.username), eq(usersTable.email, rest.email)));
+
+    if (existingUser) {
+      if (existingUser.username === rest.username) {
+        res.status(409).json({ error: "Username is already taken" });
+        return;
+      }
+
+      if (existingUser.email === rest.email) {
+        res.status(409).json({ error: "Email is already registered" });
+        return;
+      }
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const [user] = await db.insert(usersTable).values({ ...rest, passwordHash }).returning();
+    const full = await getUserWithDept(user.id);
+    res.status(201).json(full);
+  } catch (error) {
+    res.status(500).json({ error: getErrorMessage(error, "Could not create account") });
+  }
 });
 
 router.post("/users/login", async (req, res): Promise<void> => {
@@ -70,24 +100,36 @@ router.post("/users/login", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.username, parsed.data.username));
-  if (!user) {
-    res.status(401).json({ error: "Invalid credentials" });
-    return;
+
+  try {
+    const identifier = parsed.data.username.trim();
+    const [user] = await db
+      .select()
+      .from(usersTable)
+      .where(or(eq(usersTable.username, identifier), eq(usersTable.email, identifier)));
+
+    if (!user) {
+      res.status(401).json({ error: "Invalid credentials" });
+      return;
+    }
+    if (!user.passwordHash) {
+      res.status(401).json({ error: "This account uses Google login. Please sign in with Google." });
+      return;
+    }
+
+    const valid = await bcrypt.compare(parsed.data.password, user.passwordHash);
+    if (!valid) {
+      res.status(401).json({ error: "Invalid credentials" });
+      return;
+    }
+
+    await db.update(usersTable).set({ status: "online" }).where(eq(usersTable.id, user.id));
+    (req.session as unknown as Record<string, unknown>).userId = user.id;
+    const full = await getUserWithDept(user.id);
+    res.json(full);
+  } catch (error) {
+    res.status(500).json({ error: getErrorMessage(error, "Login failed") });
   }
-  if (!user.passwordHash) {
-    res.status(401).json({ error: "This account uses Google login. Please sign in with Google." });
-    return;
-  }
-  const valid = await bcrypt.compare(parsed.data.password, user.passwordHash);
-  if (!valid) {
-    res.status(401).json({ error: "Invalid credentials" });
-    return;
-  }
-  await db.update(usersTable).set({ status: "online" }).where(eq(usersTable.id, user.id));
-  (req.session as unknown as Record<string, unknown>).userId = user.id;
-  const full = await getUserWithDept(user.id);
-  res.json(full);
 });
 
 router.post("/users/logout", async (req, res): Promise<void> => {

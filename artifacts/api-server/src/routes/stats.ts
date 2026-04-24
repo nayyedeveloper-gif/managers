@@ -76,7 +76,7 @@ router.get("/stats/my-tasks", async (req, res): Promise<void> => {
   if (!userId) { res.status(400).json({ error: "userId required" }); return; }
 
   const tasks = await db.select().from(tasksTable).where(eq(tasksTable.assigneeId, userId));
-  const enriched = await Promise.all(tasks.map(async (t) => {
+  const enriched = await Promise.all(tasks.map(async (t: typeof tasksTable.$inferSelect) => {
     const creator = await db.select().from(usersTable).where(eq(usersTable.id, t.creatorId)).limit(1);
     const project = t.projectId ? await db.select({ name: projectsTable.name }).from(projectsTable).where(eq(projectsTable.id, t.projectId)).limit(1) : [];
     return {

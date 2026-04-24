@@ -13,6 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { requestNotificationPermission } from "@/utils/notification-sound";
 
+const brandLogoUrl = new URL("../../../../logo-confirm copy.png", import.meta.url).href;
+
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const isAdmin = useIsAdmin();
@@ -150,12 +152,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <aside className="hidden w-56 border-r bg-card md:flex flex-col">
-        <div className="flex h-12 items-center border-b px-4 shrink-0">
-          <div className="flex items-center gap-2 font-bold text-primary">
-            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <Hash className="h-3.5 w-3.5" />
-            </div>
-            29 Management
+        <div className="flex h-20 items-center border-b px-4 shrink-0">
+          <div className="flex items-center gap-3 font-bold text-primary min-w-0">
+            <img src={brandLogoUrl} alt="Management" className="h-14 w-auto object-contain shrink-0" />
+            <span className="text-lg leading-tight truncate">Management</span>
           </div>
         </div>
         <ScrollArea className="flex-1 py-2">
@@ -183,12 +183,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-56 p-0 flex flex-col">
-                <div className="flex h-12 items-center border-b px-4 shrink-0">
-                  <div className="flex items-center gap-2 font-bold text-primary">
-                    <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                      <Hash className="h-3.5 w-3.5" />
-                    </div>
-                    29 Management
+                <div className="flex h-20 items-center border-b px-4 shrink-0">
+                  <div className="flex items-center gap-3 font-bold text-primary min-w-0">
+                    <img src={brandLogoUrl} alt="Management" className="h-14 w-auto object-contain shrink-0" />
+                    <span className="text-lg leading-tight truncate">Management</span>
                   </div>
                 </div>
                 <ScrollArea className="flex-1 py-2">
@@ -196,7 +194,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 </ScrollArea>
               </SheetContent>
             </Sheet>
-            <span className="font-semibold text-sm">29 Management</span>
+            <div className="flex items-center gap-2 min-w-0">
+              <img src={brandLogoUrl} alt="Management" className="h-10 w-auto object-contain shrink-0" />
+              <span className="font-semibold text-base truncate">Management</span>
+            </div>
           </div>
 
           <div className="ml-auto flex items-center gap-2">

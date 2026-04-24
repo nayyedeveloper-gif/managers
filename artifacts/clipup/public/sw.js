@@ -1,11 +1,9 @@
-const CACHE_NAME = 'clipup-v1';
+const CACHE_NAME = '29-jewellery-management-v1';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png',
-  '/apple-touch-icon.png',
+  '/logo.jpg',
 ];
 
 self.addEventListener('install', (event) => {
@@ -27,7 +25,14 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
+  // Skip API requests - let them go directly to the server
   if (url.pathname.startsWith('/api/')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  // Skip external requests (fonts, images, etc.)
+  if (url.origin !== self.location.origin) {
     event.respondWith(fetch(event.request));
     return;
   }

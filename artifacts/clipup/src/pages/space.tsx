@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Plus, ArrowLeft, FolderKanban, ChevronRight, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { SpaceIcon } from "@/components/space-icon";
 
 const STATUS_COLORS: Record<string, string> = {
   active: "bg-emerald-500/10 text-emerald-600 border-emerald-200",
@@ -70,7 +71,11 @@ export default function SpaceDetail() {
 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          {space && <div className="text-3xl">{space.icon}</div>}
+          {space && (
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted/70">
+              <SpaceIcon icon={space.icon} className="h-6 w-6" style={{ color: space.color }} />
+            </div>
+          )}
           <div>
             <h1 className="text-2xl font-bold tracking-tight">{space?.name}</h1>
             {space?.description && <p className="text-muted-foreground text-sm mt-0.5">{space.description}</p>}

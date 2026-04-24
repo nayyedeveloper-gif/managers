@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from "@/components/ui/badge";
 import { Plus, Layers, FolderOpen, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { SpaceIcon } from "@/components/space-icon";
 
 export default function Spaces() {
   const { user } = useAuth();
@@ -22,7 +23,7 @@ export default function Spaces() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [color, setColor] = useState("#6366f1");
-  const [icon, setIcon] = useState("📁");
+  const [icon, setIcon] = useState("folder");
 
   const { data: spaces = [], isLoading } = useListSpaces({
     query: { queryKey: getListSpacesQueryKey() }
@@ -36,7 +37,7 @@ export default function Spaces() {
       await createSpace.mutateAsync({ data: { name, description: description || null, color, icon, ownerId: user.id } });
       queryClient.invalidateQueries({ queryKey: getListSpacesQueryKey() });
       setOpen(false);
-      setName(""); setDescription(""); setColor("#6366f1"); setIcon("📁");
+      setName(""); setDescription(""); setColor("#6366f1"); setIcon("folder");
       toast({ title: "Space created" });
     } catch {
       toast({ variant: "destructive", title: "Failed to create space" });
@@ -44,7 +45,7 @@ export default function Spaces() {
   };
 
   const COLORS = ["#6366f1", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#3b82f6", "#ef4444"];
-  const ICONS = ["📁", "⚙️", "🎨", "📈", "🚀", "💡", "🔬", "🏆"];
+  const ICONS = ["folder", "settings", "palette", "chart", "rocket", "idea", "shield", "gem"];
 
   return (
     <div className="p-6 space-y-6">
@@ -80,7 +81,9 @@ export default function Spaces() {
                 <Label>Icon</Label>
                 <div className="flex gap-2 flex-wrap">
                   {ICONS.map(ic => (
-                    <button key={ic} type="button" onClick={() => setIcon(ic)} className={`w-9 h-9 text-lg rounded-lg border-2 transition-all ${icon === ic ? "border-primary bg-primary/10" : "border-border"}`}>{ic}</button>
+                    <button key={ic} type="button" onClick={() => setIcon(ic)} className={`w-9 h-9 flex items-center justify-center rounded-lg border-2 transition-all ${icon === ic ? "border-primary bg-primary/10" : "border-border"}`}>
+                      <SpaceIcon icon={ic} className="h-4 w-4" />
+                    </button>
                   ))}
                 </div>
               </div>
@@ -108,7 +111,9 @@ export default function Spaces() {
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="text-2xl">{space.icon}</div>
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted/70">
+                        <SpaceIcon icon={space.icon} className="h-5 w-5" style={{ color: space.color }} />
+                      </div>
                       <div>
                         <CardTitle className="text-base">{space.name}</CardTitle>
                         {space.description && <CardDescription className="text-xs mt-0.5 line-clamp-1">{space.description}</CardDescription>}

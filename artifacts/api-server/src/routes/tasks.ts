@@ -102,7 +102,7 @@ router.get("/tasks/:id/comments", async (req, res): Promise<void> => {
     .leftJoin(usersTable, eq(taskCommentsTable.authorId, usersTable.id))
     .where(eq(taskCommentsTable.taskId, taskId))
     .orderBy(sql`${taskCommentsTable.createdAt} ASC`);
-  res.json(comments.map(c => ({ ...c, authorName: c.authorName ?? "Unknown" })));
+  res.json(comments.map((c: (typeof comments)[number]) => ({ ...c, authorName: c.authorName ?? "Unknown" })));
 });
 
 router.post("/tasks/:id/comments", async (req, res): Promise<void> => {

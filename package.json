@@ -5,6 +5,7 @@
   "scripts": {
     "preinstall": "sh -c 'rm -f package-lock.json yarn.lock; case \"$npm_config_user_agent\" in pnpm/*) ;; *) echo \"Use pnpm instead\" >&2; exit 1 ;; esac'",
     "build": "pnpm run typecheck && pnpm -r --filter './artifacts/**' --filter './scripts' --filter '!./artifacts/mockup-sandbox' --if-present run build",
+    "db:reset-local": "psql \"$DATABASE_URL\" -v ON_ERROR_STOP=1 -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;' && psql \"$DATABASE_URL\" -v ON_ERROR_STOP=1 -f ./lib/db/drizzle/0000_colorful_synch.sql && psql \"$DATABASE_URL\" -v ON_ERROR_STOP=1 -f ./lib/db/drizzle/seed.sql",
     "typecheck:libs": "tsc --build",
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --filter '!./artifacts/mockup-sandbox' --if-present run typecheck"
   },

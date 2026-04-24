@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { useGetDashboardStats, getGetDashboardStatsQueryKey, useGetRecentActivity, getGetRecentActivityQueryKey, useGetMyTasks, getGetMyTasksQueryKey } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Users, Hash, MessageSquare, FolderKanban, Target, CheckSquare, Activity, TrendingUp, AlertTriangle } from "lucide-react";
+import { Users, Hash, MessageSquare, FolderKanban, Target, CheckSquare, Activity, TrendingUp, AlertTriangle, Layers } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -175,14 +175,14 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent className="space-y-1.5">
               {[
-                { href: "/spaces", label: "Browse Spaces", icon: "🗂️" },
-                { href: "/projects", label: "All Projects", icon: "📋" },
-                { href: "/goals", label: "Team Goals", icon: "🎯" },
-                { href: "/channels", label: "Channels", icon: "💬" },
+                { href: "/spaces", label: "Browse Spaces", icon: Layers },
+                { href: "/projects", label: "All Projects", icon: FolderKanban },
+                { href: "/goals", label: "Team Goals", icon: Target },
+                { href: "/channels", label: "Channels", icon: Hash },
               ].map(link => (
                 <Link key={link.href} href={link.href}>
                   <div className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-muted/60 transition-colors cursor-pointer">
-                    <span className="text-base">{link.icon}</span>
+                    <link.icon className="h-4 w-4 text-primary" />
                     <span className="text-sm">{link.label}</span>
                   </div>
                 </Link>

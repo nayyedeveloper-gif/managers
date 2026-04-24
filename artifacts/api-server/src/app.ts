@@ -1,8 +1,10 @@
+import "dotenv/config";
 import express, { type Express } from "express";
 import cors from "cors";
 import session from "express-session";
 import passport from "passport";
 import pinoHttp from "pino-http";
+import helmet from "helmet";
 import router from "./routes";
 import { logger } from "./lib/logger";
 
@@ -32,6 +34,24 @@ app.set("trust proxy", true);
 app.use(cors({ credentials: true, origin: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Security headers with CSP configuration
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://*.googleapis.com", "https://accounts.google.com"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://*.googleapis.com"],
+        imgSrc: ["'self'", "data:", "https:", "https://*.googleusercontent.com"],
+        connectSrc: ["'self'", "https://*.googleapis.com", "https://accounts.google.com", "http://localhost:8080"],
+        fontSrc: ["'self'", "data:", "https://*.googleapis.com"],
+        frameSrc: ["'self'", "https://accounts.google.com"],
+      },
+    },
+    crossOriginEmbedderPolicy: false,
+  })
+);
 
 app.use(session({
   secret: process.env["SESSION_SECRET"] ?? "clipup-secret-dev",

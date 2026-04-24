@@ -9,13 +9,18 @@ import { rm } from "node:fs/promises";
 globalThis.require = createRequire(import.meta.url);
 
 const artifactDir = path.dirname(fileURLToPath(import.meta.url));
+const isSeed = process.argv.includes("--seed");
 
 async function buildAll() {
   const distDir = path.resolve(artifactDir, "dist");
   await rm(distDir, { recursive: true, force: true });
 
+  const entryPoint = isSeed 
+    ? path.resolve(artifactDir, "src/seed.ts")
+    : path.resolve(artifactDir, "src/index.ts");
+
   await esbuild({
-    entryPoints: [path.resolve(artifactDir, "src/index.ts")],
+    entryPoints: [entryPoint],
     platform: "node",
     bundle: true,
     format: "esm",

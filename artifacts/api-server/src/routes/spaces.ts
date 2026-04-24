@@ -20,7 +20,7 @@ router.get("/spaces", async (_req, res): Promise<void> => {
     .leftJoin(usersTable, eq(spacesTable.ownerId, usersTable.id));
 
   const result = await Promise.all(
-    spaces.map(async (s) => {
+    spaces.map(async (s: (typeof spaces)[number]) => {
       const [projectCount] = await db
         .select({ count: sql<number>`COUNT(*)::int` })
         .from(projectsTable)
@@ -32,7 +32,7 @@ router.get("/spaces", async (_req, res): Promise<void> => {
 });
 
 router.post("/spaces", async (req, res): Promise<void> => {
-  const { name, description, color = "#6366f1", icon = "📁", ownerId } = req.body;
+  const { name, description, color = "#6366f1", icon = "folder", ownerId } = req.body;
   const [space] = await db
     .insert(spacesTable)
     .values({ name, description, color, icon, ownerId })

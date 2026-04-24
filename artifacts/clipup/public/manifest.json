@@ -1,6 +1,6 @@
 {
-  "name": "29 Management",
-  "short_name": "29 Mgmt",
+  "name": "Management",
+  "short_name": "Management",
   "description": "Project management and team messaging platform",
   "start_url": "/",
   "display": "standalone",

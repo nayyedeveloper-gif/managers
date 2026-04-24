@@ -6,8 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Hash, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+const brandLogoUrl = new URL("../../../../logo-confirm.png", import.meta.url).href;
 
 function GoogleIcon() {
   return (
@@ -21,13 +23,15 @@ function GoogleIcon() {
 }
 
 export default function Login() {
-  const [username, setUsername] = useState("admin");
-  const [password, setPassword] = useState("secret");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const [regUsername, setRegUsername] = useState("");
   const [regDisplayName, setRegDisplayName] = useState("");
   const [regEmail, setRegEmail] = useState("");
   const [regPassword, setRegPassword] = useState("");
+  const [showRegPassword, setShowRegPassword] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
   const [googleEnabled, setGoogleEnabled] = useState<boolean | null>(null);
@@ -63,7 +67,7 @@ export default function Login() {
       await login({ data: { username, password } });
       toast({ title: "Success", description: "Logged in successfully" });
     } catch (error: any) {
-      const msg = error?.response?.data?.error ?? error?.message ?? "Invalid credentials";
+      const msg = error?.response?.data?.error ?? error?.message ?? "Login failed";
       toast({ variant: "destructive", title: "Error", description: msg });
     } finally {
       setIsLoading(false);
@@ -84,7 +88,8 @@ export default function Login() {
       });
       toast({ title: "Account created", description: "You can now log in" });
     } catch (error) {
-      toast({ variant: "destructive", title: "Error", description: "Could not create account" });
+      const msg = (error as any)?.response?.data?.error ?? (error as Error)?.message ?? "Could not create account";
+      toast({ variant: "destructive", title: "Error", description: msg });
     } finally {
       setIsLoading(false);
     }
@@ -98,10 +103,10 @@ export default function Login() {
     <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
       <Card className="w-full max-w-md shadow-lg border-primary/10">
         <CardHeader className="space-y-1 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <Hash className="h-6 w-6 text-primary" />
+          <div className="mx-auto mb-4 flex items-center justify-center">
+            <img src={brandLogoUrl} alt="Management" className="h-40 w-auto object-contain" />
           </div>
-          <CardTitle className="text-2xl font-bold tracking-tight">29 Management</CardTitle>
+          <CardTitle className="text-3xl font-bold tracking-tight">Management</CardTitle>
           <CardDescription>
             The professional messaging platform
           </CardDescription>
@@ -150,15 +155,25 @@ export default function Login() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="bg-background"
-                    autoComplete="current-password"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      className="bg-background pr-10"
+                      autoComplete="current-password"
+                    />
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+                      onClick={() => setShowPassword((value) => !value)}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading && !createUser.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
@@ -205,15 +220,25 @@ export default function Login() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="reg-password">Password</Label>
-                  <Input
-                    id="reg-password"
-                    type="password"
-                    value={regPassword}
-                    onChange={(e) => setRegPassword(e.target.value)}
-                    required
-                    className="bg-background"
-                    autoComplete="new-password"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="reg-password"
+                      type={showRegPassword ? "text" : "password"}
+                      value={regPassword}
+                      onChange={(e) => setRegPassword(e.target.value)}
+                      required
+                      className="bg-background pr-10"
+                      autoComplete="new-password"
+                    />
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+                      onClick={() => setShowRegPassword((value) => !value)}
+                      aria-label={showRegPassword ? "Hide password" : "Show password"}
+                    >
+                      {showRegPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading || createUser.isPending}>
                   {createUser.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}

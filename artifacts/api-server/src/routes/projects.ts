@@ -95,7 +95,7 @@ router.get("/projects/:id/tasks", async (req, res): Promise<void> => {
   if (assigneeId) conditions.push(eq(tasksTable.assigneeId, parseInt(assigneeId as string)));
   if (priority) conditions.push(eq(tasksTable.priority, priority as string));
   const tasks = await db.select().from(tasksTable).where(and(...conditions));
-  const enriched = await Promise.all(tasks.map(async (t) => {
+  const enriched = await Promise.all(tasks.map(async (t: typeof tasksTable.$inferSelect) => {
     const assignee = t.assigneeId ? await db.select().from(usersTable).where(eq(usersTable.id, t.assigneeId)).limit(1) : [];
     const creator = await db.select().from(usersTable).where(eq(usersTable.id, t.creatorId)).limit(1);
     const [subCount] = await db.select({ count: sql<number>`COUNT(*)::int` }).from(tasksTable).where(eq(tasksTable.parentTaskId, t.id));
@@ -119,12 +119,12 @@ router.get("/projects/:id/stats", async (req, res): Promise<void> => {
   const projectId = parseInt(req.params.id);
   const allTasks = await db.select().from(tasksTable).where(eq(tasksTable.projectId, projectId));
   const total = allTasks.length;
-  const completed = allTasks.filter(t => t.status === "done").length;
-  const inProgress = allTasks.filter(t => t.status === "in_progress").length;
-  const todo = allTasks.filter(t => t.status === "todo").length;
-  const overdue = allTasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== "done").length;
+  const completed = allTasks.filter((t: typeof tasksTable.$inferSelect) => t.status === "done").length;
+  const inProgress = allTasks.filter((t: typeof tasksTable.$inferSelect) => t.status === "in_progress").length;
+  const todo = allTasks.filter((t: typeof tasksTable.$inferSelect) => t.status === "todo").length;
+  const overdue = allTasks.filter((t: typeof tasksTable.$inferSelect) => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== "done").length;
   const byPriority = { low: 0, medium: 0, high: 0, urgent: 0 };
-  allTasks.forEach(t => { (byPriority as Record<string, number>)[t.priority] = ((byPriority as Record<string, number>)[t.priority] ?? 0) + 1; });
+  allTasks.forEach((t: typeof tasksTable.$inferSelect) => { (byPriority as Record<string, number>)[t.priority] = ((byPriority as Record<string, number>)[t.priority] ?? 0) + 1; });
 
   const assigneeMap = new Map<number, { userId: number; name: string; count: number }>();
   for (const t of allTasks) {
