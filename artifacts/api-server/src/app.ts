@@ -10,25 +10,25 @@ import { logger } from "./lib/logger";
 
 const app: Express = express();
 
-app.use(
-  pinoHttp({
-    logger,
-    serializers: {
-      req(req) {
-        return {
-          id: req.id,
-          method: req.method,
-          url: req.url?.split("?")[0],
-        };
-      },
-      res(res) {
-        return {
-          statusCode: res.statusCode,
-        };
-      },
-    },
-  }),
-);
+// app.use(
+//   pinoHttp({
+//     logger,
+//     serializers: {
+//       req(req) {
+//         return {
+//           id: req.id,
+//           method: req.method,
+//           url: req.url?.split("?")[0],
+//         };
+//       },
+//       res(res) {
+//         return {
+//           statusCode: res.statusCode,
+//         };
+//       },
+//     },
+//   }),
+// );
 // Trust Replit's reverse proxy so req.protocol and req.hostname are correct
 app.set("trust proxy", true);
 // app.use(cors({ credentials: true, origin: true }));
