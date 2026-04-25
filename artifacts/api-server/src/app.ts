@@ -36,22 +36,22 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Security headers with CSP configuration
-app.use(
-  helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://*.googleapis.com", "https://accounts.google.com"],
-        styleSrc: ["'self'", "'unsafe-inline'", "https://*.googleapis.com"],
-        imgSrc: ["'self'", "data:", "https:", "https://*.googleusercontent.com"],
-        connectSrc: ["'self'", "https://*.googleapis.com", "https://accounts.google.com", "http://localhost:8080"],
-        fontSrc: ["'self'", "data:", "https://*.googleapis.com"],
-        frameSrc: ["'self'", "https://accounts.google.com"],
-      },
-    },
-    crossOriginEmbedderPolicy: false,
-  })
-);
+// app.use(
+//   helmet({
+//     contentSecurityPolicy: {
+//       directives: {
+//         defaultSrc: ["'self'"],
+//         scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://*.googleapis.com", "https://accounts.google.com"],
+//         styleSrc: ["'self'", "'unsafe-inline'", "https://*.googleapis.com"],
+//         imgSrc: ["'self'", "data:", "https:", "https://*.googleusercontent.com"],
+//         connectSrc: ["'self'", "https://*.googleapis.com", "https://accounts.google.com", "http://localhost:8080"],
+//         fontSrc: ["'self'", "data:", "https://*.googleapis.com"],
+//         frameSrc: ["'self'", "https://accounts.google.com"],
+//       },
+//     },
+//     crossOriginEmbedderPolicy: false,
+//   })
+// );
 
 // app.use(session({
 //   secret: process.env["SESSION_SECRET"] ?? "clipup-secret-dev",
