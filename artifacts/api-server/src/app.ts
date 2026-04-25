@@ -35,7 +35,9 @@ app.set("trust proxy", true);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Test with minimal middleware
-app.use("/api", router);
+// Test with no routes
+app.use("/api", (req, res) => {
+  res.json({ message: "API is working" });
+});
 
 export default app;
