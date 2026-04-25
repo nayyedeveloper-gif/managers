@@ -50,8 +50,44 @@ router.post("/tasks", async (req, res): Promise<void> => {
   res.status(201).json(await enrichTask(task));
 });
 
+router.get("/tasks/my-tasks", async (req, res): Promise<void> => {
+  const userId = parseInt(req.query.userId as string);
+  if (!userId) { res.status(400).json({ error: "userId required" }); return; }
+
+  const tasks = await db.select().from(tasksTable).where(eq(tasksTable.assigneeId, userId));
+  const enriched = await Promise.all(tasks.map(async (t: typeof tasksTable.$inferSelect) => {
+    const creator = await db.select().from(usersTable).where(eq(usersTable.id, t.creatorId)).limit(1);
+    const project = t.projectId ? await db.select({ name: projectsTable.name }).from(projectsTable).where(eq(projectsTable.id, t.projectId)).limit(1) : [];
+    return {
+      ...t,
+      projectName: project[0]?.name ?? null,
+      assigneeName: null,
+      assigneeAvatar: null,
+      creatorName: creator[0]?.displayName ?? "Unknown",
+      subtaskCount: 0,
+      completedSubtaskCount: 0,
+      commentCount: 0,
+    };
+  }));
+
+  const now = new Date();
+  const todayEnd = new Date(); todayEnd.setHours(23, 59, 59, 999);
+
+  res.json({
+    todo: enriched.filter(t => t.status === "todo").length,
+    inProgress: enriched.filter(t => t.status === "in_progress").length,
+    inReview: enriched.filter(t => t.status === "in_review").length,
+    done: enriched.filter(t => t.status === "done").length,
+    overdue: enriched.filter(t => t.dueDate && new Date(t.dueDate) < now && t.status !== "done").length,
+    dueToday: enriched.filter(t => t.dueDate && new Date(t.dueDate) <= todayEnd && new Date(t.dueDate) >= new Date(now.setHours(0, 0, 0, 0)) && t.status !== "done").length,
+    recentTasks: enriched.slice(0, 5),
+  });
+});
+
 router.get("/tasks/:id", async (req, res): Promise<void> => {
-  const [task] = await db.select().from(tasksTable).where(eq(tasksTable.id, parseInt(req.params.id)));
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) { res.status(404).json({ error: "Not found" }); return; }
+  const [task] = await db.select().from(tasksTable).where(eq(tasksTable.id, id));
   if (!task) { res.status(404).json({ error: "Not found" }); return; }
   res.json(await enrichTask(task));
 });
