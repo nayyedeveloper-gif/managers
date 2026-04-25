@@ -103,10 +103,19 @@ router.post("/users/login", async (req, res): Promise<void> => {
 
   try {
     const identifier = parsed.data.username.trim();
-    const [user] = await db
+    // Query by username first, then by email if not found
+    let userResult = await db
       .select()
       .from(usersTable)
-      .where(or(eq(usersTable.username, identifier), eq(usersTable.email, identifier)));
+      .where(eq(usersTable.username, identifier));
+    let user = userResult[0];
+    if (!user) {
+      userResult = await db
+        .select()
+        .from(usersTable)
+        .where(eq(usersTable.email, identifier));
+      user = userResult[0];
+    }
 
     if (!user) {
       res.status(401).json({ error: "Invalid credentials" });
