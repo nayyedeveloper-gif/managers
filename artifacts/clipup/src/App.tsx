@@ -14,6 +14,7 @@ import DepartmentDetail from "@/pages/department";
 import Channels from "@/pages/channels";
 import ChannelChat from "@/pages/channel";
 import DMs from "@/pages/dms";
+import Personal from "@/pages/personal";
 import Notifications from "@/pages/notifications";
 import Settings from "@/pages/settings";
 import Spaces from "@/pages/spaces";
@@ -78,6 +79,7 @@ function App() {
             <ProtectedRoute path="/tasks" component={Tasks} />
             <ProtectedRoute path="/tasks/today-overdue" component={Tasks} />
             <ProtectedRoute path="/tasks/:id" component={Tasks} />
+            <ProtectedRoute path="/personal" component={Personal} />
             <ProtectedRoute path="/goals" component={Goals} />
             <ProtectedRoute path="/goals/:id" component={GoalDetail} />
             <ProtectedRoute path="/departments" component={Departments} />

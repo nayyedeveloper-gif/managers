@@ -129,6 +129,17 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       </div>
       <div className="px-3 py-2">
+        <p className="mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Personal</p>
+        <div className="space-y-0.5">
+          <Link href="/personal">
+            <Button variant={location.startsWith("/personal") ? "secondary" : "ghost"} size="sm" className="w-full justify-start h-8 px-3 mb-1">
+              <Users className="mr-2 h-4 w-4" />
+              Personal List
+            </Button>
+          </Link>
+        </div>
+      </div>
+      <div className="px-3 py-2">
         <p className="mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Communicate</p>
         <div className="space-y-0.5">
           <Link href="/departments">
