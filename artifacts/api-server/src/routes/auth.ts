@@ -1,7 +1,7 @@
 import { Router, type IRouter, type Request } from "express";
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-import { eq, or } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db, usersTable } from "@workspace/db";
 
 const router: IRouter = Router();
@@ -38,18 +38,20 @@ if (googleEnabled()) {
 
           // Try to find existing user by googleId or email
           let user = null;
-          if (email) {
-            const [found] = await db
-              .select()
+          // Query by googleId first
+          const googleResult = await db
+            .select({ id: usersTable.id, googleId: usersTable.googleId, email: usersTable.email, avatarUrl: usersTable.avatarUrl })
+            .from(usersTable)
+            .where(eq(usersTable.googleId, profile.id));
+          user = googleResult[0] ?? null;
+
+          // If not found, query by email
+          if (!user && email) {
+            const emailResult = await db
+              .select({ id: usersTable.id, googleId: usersTable.googleId, email: usersTable.email, avatarUrl: usersTable.avatarUrl })
               .from(usersTable)
-              .where(or(eq(usersTable.googleId, profile.id), eq(usersTable.email, email)));
-            user = found ?? null;
-          } else {
-            const [found] = await db
-              .select()
-              .from(usersTable)
-              .where(eq(usersTable.googleId, profile.id));
-            user = found ?? null;
+              .where(eq(usersTable.email, email));
+            user = emailResult[0] ?? null;
           }
 
           if (user) {

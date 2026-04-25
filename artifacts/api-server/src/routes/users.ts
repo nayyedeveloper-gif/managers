@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, or } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db, usersTable, departmentsTable } from "@workspace/db";
 import bcrypt from "bcryptjs";
 import {
@@ -68,10 +68,20 @@ router.post("/users", async (req, res): Promise<void> => {
   try {
     const { password, ...rest } = parsed.data;
 
-    const [existingUser] = await db
+    let existingUser = null;
+    const usernameResult = await db
       .select({ id: usersTable.id, username: usersTable.username, email: usersTable.email })
       .from(usersTable)
-      .where(or(eq(usersTable.username, rest.username), eq(usersTable.email, rest.email)));
+      .where(eq(usersTable.username, rest.username));
+    existingUser = usernameResult[0] ?? null;
+
+    if (!existingUser) {
+      const emailResult = await db
+        .select({ id: usersTable.id, username: usersTable.username, email: usersTable.email })
+        .from(usersTable)
+        .where(eq(usersTable.email, rest.email));
+      existingUser = emailResult[0] ?? null;
+    }
 
     if (existingUser) {
       if (existingUser.username === rest.username) {
