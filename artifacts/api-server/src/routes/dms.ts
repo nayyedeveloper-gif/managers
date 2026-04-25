@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, lt, desc, or, and } from "drizzle-orm";
+import { eq, lt, desc, or, and, inArray } from "drizzle-orm";
 import { db, directMessagesTable, usersTable, notificationsTable } from "@workspace/db";
 import { sendPushToUser } from "./push";
 
@@ -184,77 +184,84 @@ router.post("/dms/messages/:id/reactions", async (req, res): Promise<void> => {
 
 // List all DM conversations for current user
 router.get("/dms/conversations", async (req, res): Promise<void> => {
-  const currentUserId = ((req.session as unknown as Record<string, unknown>).userId as number) ?? 1;
+  try {
+    const currentUserId = ((req.session as unknown as Record<string, unknown>).userId as number) ?? 1;
 
-  // Get all unique users the current user has DMs with
-  const sentDms = await db.select({ receiverId: directMessagesTable.receiverId })
-    .from(directMessagesTable)
-    .where(eq(directMessagesTable.senderId, currentUserId));
+    // Get all unique users the current user has DMs with
+    const sentDms = await db.select({ receiverId: directMessagesTable.receiverId })
+      .from(directMessagesTable)
+      .where(eq(directMessagesTable.senderId, currentUserId));
 
-  const receivedDms = await db.select({ senderId: directMessagesTable.senderId })
-    .from(directMessagesTable)
-    .where(eq(directMessagesTable.receiverId, currentUserId));
+    const receivedDms = await db.select({ senderId: directMessagesTable.senderId })
+      .from(directMessagesTable)
+      .where(eq(directMessagesTable.receiverId, currentUserId));
 
-  const userIds = new Set<number>();
-  sentDms.forEach((dm: { receiverId: number }) => userIds.add(dm.receiverId));
-  receivedDms.forEach((dm: { senderId: number }) => userIds.add(dm.senderId));
+    const userIds = new Set<number>();
+    sentDms.forEach((dm: { receiverId: number }) => userIds.add(dm.receiverId));
+    receivedDms.forEach((dm: { senderId: number }) => userIds.add(dm.senderId));
 
-  if (userIds.size === 0) {
+    if (userIds.size === 0) {
+      res.json([]);
+      return;
+    }
+
+    const userIdsArray = Array.from(userIds);
+
+    // Get user details for all conversations
+    const users = await db.select({
+      id: usersTable.id,
+      displayName: usersTable.displayName,
+      avatarUrl: usersTable.avatarUrl,
+      username: usersTable.username,
+    }).from(usersTable).where(inArray(usersTable.id, userIdsArray));
+
+    // For each user, get the last message and unread count
+    const conversations = await Promise.all(userIdsArray.map(async (otherUserId) => {
+      const [lastMessage] = await db.select()
+        .from(directMessagesTable)
+        .where(
+          or(
+            and(eq(directMessagesTable.senderId, currentUserId), eq(directMessagesTable.receiverId, otherUserId)),
+            and(eq(directMessagesTable.senderId, otherUserId), eq(directMessagesTable.receiverId, currentUserId))
+          )
+        )
+        .orderBy(desc(directMessagesTable.createdAt))
+        .limit(1);
+
+      const unreadCount = await db.select({ count: directMessagesTable.id })
+        .from(directMessagesTable)
+        .where(
+          and(
+            eq(directMessagesTable.senderId, otherUserId),
+            eq(directMessagesTable.receiverId, currentUserId),
+            eq(directMessagesTable.isRead, false)
+          )
+        );
+
+      const user = users.find((u: { id: number }) => u.id === otherUserId);
+
+      return {
+        userId: otherUserId,
+        displayName: user?.displayName ?? "Unknown",
+        avatarUrl: user?.avatarUrl ?? null,
+        username: user?.username ?? "",
+        lastMessage: lastMessage ?? null,
+        unreadCount: unreadCount.length,
+      };
+    }));
+
+    // Sort by last message date
+    conversations.sort((a, b) => {
+      if (!a.lastMessage) return 1;
+      if (!b.lastMessage) return -1;
+      return new Date(b.lastMessage.createdAt).getTime() - new Date(a.lastMessage.createdAt).getTime();
+    });
+
+    res.json(conversations);
+  } catch (error) {
+    console.error("DMS conversations error:", error);
     res.json([]);
-    return;
   }
-
-  // Get user details for each conversation
-  const users = await db.select({
-    id: usersTable.id,
-    displayName: usersTable.displayName,
-    avatarUrl: usersTable.avatarUrl,
-    username: usersTable.username,
-  }).from(usersTable).where(eq(usersTable.id, Array.from(userIds)[0] || 0));
-
-  // For each user, get the last message and unread count
-  const conversations = await Promise.all(Array.from(userIds).map(async (otherUserId) => {
-    const [lastMessage] = await db.select()
-      .from(directMessagesTable)
-      .where(
-        or(
-          and(eq(directMessagesTable.senderId, currentUserId), eq(directMessagesTable.receiverId, otherUserId)),
-          and(eq(directMessagesTable.senderId, otherUserId), eq(directMessagesTable.receiverId, currentUserId))
-        )
-      )
-      .orderBy(desc(directMessagesTable.createdAt))
-      .limit(1);
-
-    const unreadCount = await db.select({ count: directMessagesTable.id })
-      .from(directMessagesTable)
-      .where(
-        and(
-          eq(directMessagesTable.senderId, otherUserId),
-          eq(directMessagesTable.receiverId, currentUserId),
-          eq(directMessagesTable.isRead, false)
-        )
-      );
-
-    const user = users.find((u: { id: number }) => u.id === otherUserId);
-
-    return {
-      userId: otherUserId,
-      displayName: user?.displayName ?? "Unknown",
-      avatarUrl: user?.avatarUrl ?? null,
-      username: user?.username ?? "",
-      lastMessage: lastMessage ?? null,
-      unreadCount: unreadCount.length,
-    };
-  }));
-
-  // Sort by last message date
-  conversations.sort((a, b) => {
-    if (!a.lastMessage) return 1;
-    if (!b.lastMessage) return -1;
-    return new Date(b.lastMessage.createdAt).getTime() - new Date(a.lastMessage.createdAt).getTime();
-  });
-
-  res.json(conversations);
 });
 
 // Mark conversation as read
