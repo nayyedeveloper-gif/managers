@@ -105,13 +105,29 @@ router.post("/users/login", async (req, res): Promise<void> => {
     const identifier = parsed.data.username.trim();
     // Query by username first, then by email if not found
     let userResult = await db
-      .select()
+      .select({
+        id: usersTable.id,
+        username: usersTable.username,
+        displayName: usersTable.displayName,
+        email: usersTable.email,
+        passwordHash: usersTable.passwordHash,
+        role: usersTable.role,
+        status: usersTable.status,
+      })
       .from(usersTable)
       .where(eq(usersTable.username, identifier));
     let user = userResult[0];
     if (!user) {
       userResult = await db
-        .select()
+        .select({
+          id: usersTable.id,
+          username: usersTable.username,
+          displayName: usersTable.displayName,
+          email: usersTable.email,
+          passwordHash: usersTable.passwordHash,
+          role: usersTable.role,
+          status: usersTable.status,
+        })
         .from(usersTable)
         .where(eq(usersTable.email, identifier));
       user = userResult[0];
