@@ -93,6 +93,7 @@ export interface Department {
   description?: string | null;
   color: string;
   memberCount: number;
+  members?: User[];
   createdAt: string;
 }
 

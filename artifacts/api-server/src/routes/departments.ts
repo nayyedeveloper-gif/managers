@@ -20,7 +20,22 @@ router.get("/departments", async (_req, res): Promise<void> => {
     createdAt: departmentsTable.createdAt,
     memberCount: sql<number>`(SELECT COUNT(*) FROM users WHERE department_id = ${departmentsTable.id})::int`,
   }).from(departmentsTable);
-  res.json(departments);
+
+  const users = await db.select({
+    id: usersTable.id,
+    displayName: usersTable.displayName,
+    avatarUrl: usersTable.avatarUrl,
+    role: usersTable.role,
+    status: usersTable.status,
+    departmentId: usersTable.departmentId,
+  }).from(usersTable);
+
+  const deptWithMembers = departments.map((d: typeof departments[number]) => ({
+    ...d,
+    members: users.filter((u: typeof users[number]) => u.departmentId === d.id),
+  }));
+
+  res.json(deptWithMembers);
 });
 
 router.post("/departments", async (req, res): Promise<void> => {
@@ -30,7 +45,7 @@ router.post("/departments", async (req, res): Promise<void> => {
     return;
   }
   const [dept] = await db.insert(departmentsTable).values(parsed.data).returning();
-  res.status(201).json({ ...dept, memberCount: 0 });
+  res.status(201).json({ ...dept, memberCount: 0, members: [] });
 });
 
 router.get("/departments/:id", async (req, res): Promise<void> => {

@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, Plus, Building2 } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -134,7 +135,27 @@ export default function Departments() {
                 {dept.description || "No description provided."}
               </CardDescription>
             </CardHeader>
-            <CardContent className="mt-auto pb-4">
+            <CardContent className="mt-auto pb-4 space-y-3">
+              {/* Member avatars */}
+              {dept.members && dept.members.length > 0 && (
+                <div className="flex items-center">
+                  <div className="flex -space-x-2">
+                    {dept.members.slice(0, 4).map((member) => (
+                      <Avatar key={member.id} className="h-7 w-7 border-2 border-background">
+                        <AvatarImage src={member.avatarUrl || undefined} />
+                        <AvatarFallback className="text-[10px] bg-muted">
+                          {member.displayName.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    ))}
+                    {dept.members.length > 4 && (
+                      <div className="h-7 w-7 rounded-full border-2 border-background bg-muted flex items-center justify-center text-[10px] font-medium text-muted-foreground">
+                        +{dept.members.length - 4}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
               <div className="flex items-center text-sm text-muted-foreground bg-muted/50 p-2 rounded-md">
                 <Users className="mr-2 h-4 w-4" />
                 {dept.memberCount} members
