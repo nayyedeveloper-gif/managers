@@ -53,23 +53,14 @@ app.use(
   })
 );
 
-app.use(session({
-  secret: process.env["SESSION_SECRET"] ?? "clipup-secret-dev",
-  resave: false,
-  saveUninitialized: false,
-  cookie: { secure: false, httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 },
-}));
+// app.use(session({
+//   secret: process.env["SESSION_SECRET"] ?? "clipup-secret-dev",
+//   resave: false,
+//   saveUninitialized: false,
+//   cookie: { secure: false, httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 },
+// }));
 
-// Bypass authentication for all routes - temporary fix
-app.use((req, res, next) => {
-  if (!req.session) {
-    (req as any).session = {};
-  }
-  (req as any).session.userId = 1;
-  next();
-});
-
-app.use(passport.initialize());
+// app.use(passport.initialize());
 
 app.use("/api", router);
 
